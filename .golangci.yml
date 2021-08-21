@@ -1,0 +1,88 @@
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: false
+  skip-dirs:
+    - ahoy
+    - ci
+    - docs
+    - features
+    - migrations
+    - terraform
+    - test
+  skip-dirs-use-default: true
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+
+linters-settings:
+  gocyclo:
+    min-complexity: 12
+  gofmt:
+    simplify: false
+
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - errcheck
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - nolintlint
+    - rowserrcheck
+    - scopelint
+    - staticcheck
+#    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
+    - bodyclose
+    - gocognit
+    - asciicheck
+    - prealloc
+    - godox
+    - nestif
+    - maligned
+    - godot
+
+  fast: false
+
+issues:
+  # Automatically fix found issues
+  fix: true
+  exclude-use-default: false
+  exclude-rules:
+    - path: main.go
+      linters:
+        - gocyclo
+    # This rule ignores missing error handling when closing http.Response.Body.
+    - linters:
+        - errcheck
+      text: ".Body.Close` is not checked"
+
+# Remind to rebase your branch!
+new-from-rev: origin/master

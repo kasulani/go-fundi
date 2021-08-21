@@ -1,0 +1,22 @@
+repos:
+  - repo: local
+    hooks:
+      - id: golangci-lint
+        name: golangci-lint
+        description: Runs `golint`, requires https://golangci-lint.run/
+        language: system
+        entry: 'docker-compose run --rm -T base-container ./pre-commit/golangci-lint.sh'
+        files: '(?<!\.pb)\.go$'
+
+      - id: cucumber-autoformat
+        name: Cucumber Autoformat
+        description: Runs `ghokin fmt replace`
+        language: system
+        entry: 'docker-compose run --rm -T base-container ./pre-commit/cucumber-autoformat.sh'
+        files: '\.feature$'
+
+      - id: gitleaks
+        name: Git Secrets Scan
+        description: Runs `gitleaks --pretty -v`, requires https://github.com/zricethezav/gitleaks
+        language: system
+        entry: 'docker-compose run --rm -T base-container ./pre-commit/git-secrets-scan.sh'

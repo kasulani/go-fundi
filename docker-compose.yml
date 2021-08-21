@@ -1,0 +1,14 @@
+version: '3'
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker-file/development/Dockerfile
+      args:
+        GO111MODULE: "on"
+    container_name: fundi-dev
+    command: "CompileDaemon -build='make install-all' -command='tail -f /dev/null'"
+    environment:
+      LOG_LEVEL: "debug"
+    volumes:
+      - .:/project
