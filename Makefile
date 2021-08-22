@@ -13,7 +13,7 @@ TEXT_INVERSE=\e[7m
 BUILD_DIR ?= $(CURDIR)/build
 BINARY_CLI=fundi
 BINARY_CLI_SRC=$(CURDIR)/cmd/fundi
-BDD_TEST=$(CURDIR)/pkg/app
+BDD_TEST=$(CURDIR)/pkg/fundi
 
 GO_LINKER_FLAGS=-ldflags="-s -w"
 SRC_DIRS=pkg
@@ -46,11 +46,21 @@ clean:
 #-----------------------------------------------------------------------------------------------------------------------
 # Dependencies
 #-----------------------------------------------------------------------------------------------------------------------
-.PHONY: deps deps-dev deps-clean deps-patch-git
+.PHONY: deps deps-dev deps-clean deps-ci
 
 deps:
 	${call print, "Installing dependencies"}
 	${call go, mod vendor -v}
+
+deps-ci:
+	${call print, "Installing CompileDaemon"}
+	${call go, get -v -u github.com/githubnemo/CompileDaemon}
+
+	${call print, "Installing Linters"}
+	${call go, get -v github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36.0}
+
+	${call print, "Installing Godog"}
+	${call go, get -v -u github.com/cucumber/godog/cmd/godog@v0.11.0}
 
 deps-dev:
 	${call print, "Installing CompileDaemon"}
@@ -123,6 +133,14 @@ test-behaviour:
 	${call go, test -v -race -tags behaviour ${BDD_TEST}}
 
 #-----------------------------------------------------------------------------------------------------------------------
+# Code style checks
+#-----------------------------------------------------------------------------------------------------------------------
+.PHONY: lint
+lint:
+	${call print, "Running code style checks"}
+	${call golangci, run}
+
+#-----------------------------------------------------------------------------------------------------------------------
 # Migrations
 #-----------------------------------------------------------------------------------------------------------------------
 .PHONY: migrations
@@ -179,6 +197,10 @@ define godog
 	@docker-compose exec $(DOCKER_CONTAINER_DEV) godog $(1)
 endef
 
+define golangci
+	@docker-compose exec $(DOCKER_CONTAINER_DEV) golangci-lint $(1)
+endef
+
 define migrate
 	@docker-compose exec $(DOCKER_CONTAINER_DEV) make migrations
 endef
@@ -192,6 +214,10 @@ endef
 
 define godog
 	@godog $(1)
+endef
+
+define golangci
+	@golangci-lint $(1)
 endef
 
 define migrate

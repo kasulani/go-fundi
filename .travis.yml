@@ -1,0 +1,30 @@
+language: go
+
+go:
+  - "1.16"
+
+env:
+  - GO111MODULE=on
+
+install:
+  - apt-get update
+  - go mod download
+  - make deps-ci
+
+stages:
+  - name: "PR checks"
+    if: branch NOT master
+
+jobs:
+  include:
+    - stage: "PR checks"
+      name: "Unit tests"
+      script: make test-unit
+    - script: make test-behaviour
+      name: "Behaviour tests"
+    - script: make lint
+      name: "Linting"
+
+branches:
+  only:
+    - master
