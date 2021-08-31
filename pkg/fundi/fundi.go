@@ -1,6 +1,7 @@
 package fundi
 
 import (
+	"context"
 	"log"
 	"os"
 
@@ -26,8 +27,10 @@ func Container(selector string) *di.Container {
 	switch selector {
 	case "cli":
 		c, err = di.New(
+			di.Provide(context.Background),
+			di.Provide(newConfig),
 			provideCliCommands(),
-			di.Invoke(registerCliCommands),
+			di.Invoke(RegisterCliCommands),
 		)
 	default:
 		log.Fatalf("unknown container selector: %s", selector)
@@ -41,7 +44,7 @@ func Container(selector string) *di.Container {
 }
 
 // StartCLI is a high level cli entry function.
-func StartCLI(root *rootCommand) error {
+func StartCLI(root *RootCommand) error {
 	return root.Execute()
 }
 
@@ -57,7 +60,8 @@ func newConfig() *config {
 	return cfg
 }
 
-func registerCliCommands(root *rootCommand, commands Commands) {
+// RegisterCliCommands adds all the sub commands to the root command.
+func RegisterCliCommands(root *RootCommand, commands Commands) {
 	for _, command := range commands {
 		command.AddTo(root)
 	}

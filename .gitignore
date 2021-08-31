@@ -2,3 +2,5 @@ vendor
 .idea
 coverage*
 build
+*funditest*
+.draft-fundi.yaml

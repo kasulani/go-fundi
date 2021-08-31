@@ -1,0 +1,20 @@
+version: 1
+metadata:
+  name: funditest
+  path: .
+structure:
+  - folder: funditest # this is the project root directory.
+    contains:
+      - file: docker-compose
+        extension: yml
+      - file: README
+        extension: md
+      - folder: cmd
+      - folder: docker-files
+      - folder: docs
+      - folder: features
+      - folder: pkg
+        contains:
+          - folder: app
+          - folder: behaviour
+          - folder: domain

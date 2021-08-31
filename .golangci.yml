@@ -3,11 +3,12 @@ run:
   issues-exit-code: 1
   tests: false
   skip-dirs:
-    - ahoy
     - ci
     - docs
+    - docker-file
     - features
     - migrations
+    - templates
     - terraform
     - test
   skip-dirs-use-default: true
@@ -23,6 +24,21 @@ linters-settings:
     min-complexity: 12
   gofmt:
     simplify: false
+  gosec:
+    includes:
+      - G401
+      - G306
+      - G101
+    excludes:
+      - G204
+    config:
+      G306: "0600"
+      G101:
+        pattern: "(?i)example"
+        ignore_entropy: false
+        entropy_threshold: "80.0"
+        per_char_threshold: "3.0"
+        truncate: "32"
 
 linters:
   disable-all: true
@@ -52,7 +68,6 @@ linters:
     - rowserrcheck
     - scopelint
     - staticcheck
-#    - structcheck
     - stylecheck
     - typecheck
     - unconvert
@@ -66,7 +81,6 @@ linters:
     - prealloc
     - godox
     - nestif
-    - maligned
     - godot
 
   fast: false
