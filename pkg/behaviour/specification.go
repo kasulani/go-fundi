@@ -67,7 +67,7 @@ func loadLogger() (*zap.Logger, error) {
 func (specs *TestSpecifications) Loader(sc *godog.ScenarioContext) {
 	specs.registerAllSteps(sc)
 
-	sc.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+	sc.After(func(ctx context.Context, s *godog.Scenario, err error) (context.Context, error) {
 		if err == nil {
 			return specs.ctx, nil
 		}

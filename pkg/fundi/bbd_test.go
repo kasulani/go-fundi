@@ -3,6 +3,7 @@
 package fundi
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,6 +38,8 @@ func featuresFiles(t *testing.T) []string {
 	if err != nil {
 		t.Fatalf("failed to get working directory: %q", err)
 	}
+
+	fmt.Println(wd)
 
 	parentDir := strings.Split(filepath.Dir(wd), string(os.PathSeparator))[1]
 

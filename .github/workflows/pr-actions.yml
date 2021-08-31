@@ -29,8 +29,10 @@ jobs:
       - name: Install deps
         run: |
           go mod download
-          make deps-ci
+          go get -v -u github.com/cucumber/godog/cmd/godog@v0.12.0
       - name: Run unit tests
-        run: make test-unit
+        run: go test -v -race -tags unit $(for d in pkg; do echo ./$d/...; done)
       - name: Run behaviour tests
-        run: make test-behaviour
+        run: |
+          pwd
+          go test -v -race -tags behaviour ./pkg/fundi

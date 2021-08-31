@@ -52,16 +52,6 @@ deps:
 	${call print, "Installing dependencies"}
 	${call go, mod vendor -v}
 
-deps-ci:
-	${call print, "Installing CompileDaemon"}
-	${call go, get -v -u github.com/githubnemo/CompileDaemon}
-
-	${call print, "Installing Linters"}
-	${call go, get -v github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36.0}
-
-	${call print, "Installing Godog"}
-	${call go, get -v -u github.com/cucumber/godog/cmd/godog@v0.11.0}
-
 deps-dev:
 	${call print, "Installing CompileDaemon"}
 	${call go, get -v -u github.com/githubnemo/CompileDaemon}
