@@ -19,12 +19,17 @@ type (
 		error     error
 	}
 
+	in struct {
+		File string
+	}
+
 	// TestSpecifications used in behaviour tests.
 	TestSpecifications struct {
 		ctx      context.Context
 		log      *zap.Logger
 		failures []string
 		out      *out
+		in       *in
 	}
 )
 
@@ -94,6 +99,8 @@ func (specs *TestSpecifications) MustStop() {
 func (specs *TestSpecifications) MustClearState(scenario *godog.Scenario) {
 	specs.log.Info(fmt.Sprintf("clear any previous state before scenario: %s", scenario.Name))
 	specs.out = &out{}
+	specs.in = &in{}
+	specs.loadFixtures(scenario)
 }
 
 func (specs TestSpecifications) commandOutput() string {
