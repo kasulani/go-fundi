@@ -34,5 +34,5 @@ jobs:
         run: go test -v -race -tags unit $(for d in pkg; do echo ./$d/...; done)
       - name: Run behaviour tests
         run: |
-          pwd
+          go install -v ./cmd/fundi
           go test -v -race -tags behaviour ./pkg/fundi

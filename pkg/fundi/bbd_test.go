@@ -3,10 +3,7 @@
 package fundi
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/cucumber/godog"
@@ -34,16 +31,13 @@ func TestBehaviour(t *testing.T) {
 }
 
 func featuresFiles(t *testing.T) []string {
-	wd, err := os.Getwd()
+	os.Chdir("../../")
+	parentDir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("failed to get working directory: %q", err)
 	}
 
-	fmt.Println(wd)
-
-	parentDir := strings.Split(filepath.Dir(wd), string(os.PathSeparator))[1]
-
-	return []string{"/" + parentDir + "/features"}
+	return []string{parentDir + "/features"}
 }
 
 func initializeSuite(specs *behaviour.TestSpecifications) func(ts *godog.TestSuiteContext) {
