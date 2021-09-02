@@ -19,12 +19,17 @@ type (
 		error     error
 	}
 
+	in struct {
+		File string
+	}
+
 	// TestSpecifications used in behaviour tests.
 	TestSpecifications struct {
 		ctx      context.Context
 		log      *zap.Logger
 		failures []string
 		out      *out
+		in       *in
 	}
 )
 
@@ -67,7 +72,7 @@ func loadLogger() (*zap.Logger, error) {
 func (specs *TestSpecifications) Loader(sc *godog.ScenarioContext) {
 	specs.registerAllSteps(sc)
 
-	sc.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+	sc.After(func(ctx context.Context, s *godog.Scenario, err error) (context.Context, error) {
 		if err == nil {
 			return specs.ctx, nil
 		}
@@ -94,6 +99,7 @@ func (specs *TestSpecifications) MustStop() {
 func (specs *TestSpecifications) MustClearState(scenario *godog.Scenario) {
 	specs.log.Info(fmt.Sprintf("clear any previous state before scenario: %s", scenario.Name))
 	specs.out = &out{}
+	specs.in = &in{}
 }
 
 func (specs TestSpecifications) commandOutput() string {

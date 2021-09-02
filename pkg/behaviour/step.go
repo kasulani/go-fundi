@@ -1,19 +1,27 @@
 package behaviour
 
 import (
+	"bytes"
 	"os/exec"
 	"strings"
+	"text/template"
 
 	"github.com/cucumber/godog"
 	assert "github.com/onsi/gomega"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 func (specs *TestSpecifications) registerAllSteps(sc *godog.ScenarioContext) {
 	specs.log.Info("register all steps")
+	sc.Step(`^I have "([^"]*)"$`, specs.iHave)
 	sc.Step(`^I execute the cli command$`, specs.iExecuteTheCliCommand)
 	sc.Step(`^I must get an exit code (\d+)$`, specs.iMustGetAnExitCode)
 	sc.Step(`^I must get a command output$`, specs.iMustGetACommandOutput)
+}
+
+func (specs *TestSpecifications) iHave(input string) error {
+	return specs.setInitialContext(input)
 }
 
 func (specs *TestSpecifications) iExecuteTheCliCommand(command *godog.DocString) error {
@@ -21,7 +29,7 @@ func (specs *TestSpecifications) iExecuteTheCliCommand(command *godog.DocString)
 		return errors.New("command string can't be empty")
 	}
 
-	parts := strings.Split(command.Content, " ")
+	parts := strings.Split(specs.parseCommand(command.Content), " ")
 	specs.out.cmdOutput, specs.out.error = exec.Command(parts[0], parts[1:]...).Output()
 
 	return nil
@@ -46,8 +54,19 @@ func (specs *TestSpecifications) iMustGetAnExitCode(exitCode int) error {
 
 func (specs *TestSpecifications) iMustGetACommandOutput(expected *godog.DocString) error {
 	if !assert.Expect(specs.commandOutput()).To(assert.Equal(expected.Content)) {
-		return errors.New("actual command cmdOutput does not match the expected command cmdOutput")
+		return errors.New("actual command output does not match the expected command output")
 	}
 
 	return nil
+}
+
+func (specs *TestSpecifications) parseCommand(cmd string) string {
+	buf := new(bytes.Buffer)
+	tmpl := template.Must(template.New("cmd").Parse(cmd))
+
+	if err := tmpl.Execute(buf, specs.in); err != nil {
+		specs.log.Fatal("failed to execute template", zap.Error(err))
+	}
+
+	return buf.String()
 }

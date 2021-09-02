@@ -1,9 +1,10 @@
 Feature: Scaffold a new project directory structure
 
   Scenario: Scaffold command exits with code 0
-    Given I execute the cli command
+    Given I have "a good fundi file"
+    When I execute the cli command
     """
-    fundi scaffold -f /project/pkg/behaviour/.bdd.test.fundi.yaml
+    fundi scaffold -f {{.File}}
     """
     Then I must get an exit code 0
     When I execute the cli command
@@ -32,8 +33,9 @@ Feature: Scaffold a new project directory structure
     """
 
   Scenario: Scaffold command exits with code 1
-    Given I execute the cli command
+    Given I have "a bad fundi file"
+    When I execute the cli command
     """
-    fundi scaffold -f /project/pkg/behaviour/.non-existing.fundi.yaml
+    fundi scaffold -f {{.File}}
     """
     Then I must get an exit code 1
