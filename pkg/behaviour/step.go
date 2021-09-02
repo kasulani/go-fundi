@@ -14,9 +14,14 @@ import (
 
 func (specs *TestSpecifications) registerAllSteps(sc *godog.ScenarioContext) {
 	specs.log.Info("register all steps")
+	sc.Step(`^I have "([^"]*)"$`, specs.iHave)
 	sc.Step(`^I execute the cli command$`, specs.iExecuteTheCliCommand)
 	sc.Step(`^I must get an exit code (\d+)$`, specs.iMustGetAnExitCode)
 	sc.Step(`^I must get a command output$`, specs.iMustGetACommandOutput)
+}
+
+func (specs *TestSpecifications) iHave(input string) error {
+	return specs.setInitialContext(input)
 }
 
 func (specs *TestSpecifications) iExecuteTheCliCommand(command *godog.DocString) error {

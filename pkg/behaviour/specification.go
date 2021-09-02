@@ -100,7 +100,6 @@ func (specs *TestSpecifications) MustClearState(scenario *godog.Scenario) {
 	specs.log.Info(fmt.Sprintf("clear any previous state before scenario: %s", scenario.Name))
 	specs.out = &out{}
 	specs.in = &in{}
-	specs.loadFixtures(scenario)
 }
 
 func (specs TestSpecifications) commandOutput() string {

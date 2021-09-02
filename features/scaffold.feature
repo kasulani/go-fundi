@@ -1,6 +1,7 @@
 Feature: Scaffold a new project directory structure
 
   Scenario: Scaffold command exits with code 0
+    Given I have "a good fundi file"
     When I execute the cli command
     """
     fundi scaffold -f {{.File}}
@@ -32,6 +33,7 @@ Feature: Scaffold a new project directory structure
     """
 
   Scenario: Scaffold command exits with code 1
+    Given I have "a bad fundi file"
     When I execute the cli command
     """
     fundi scaffold -f {{.File}}

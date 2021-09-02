@@ -3,7 +3,7 @@ package behaviour
 import (
 	"os"
 
-	"github.com/cucumber/godog"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -16,14 +16,16 @@ func (specs *TestSpecifications) workingDirectory() string {
 	return dir
 }
 
-func (specs *TestSpecifications) loadFixtures(scenario *godog.Scenario) {
-	specs.log.Info("load fixtures")
-	switch scenario.Name {
-	case "Scaffold command exits with code 0":
+func (specs *TestSpecifications) setInitialContext(input string) error {
+	specs.log.Info("set initial context")
+	switch input {
+	case "a good fundi file":
 		specs.in.File = specs.workingDirectory() + "/pkg/behaviour/.bdd.test.fundi.yaml"
-	case "Scaffold command exits with code 1":
+	case "a bad fundi file":
 		specs.in.File = specs.workingDirectory() + "/pkg/behaviour/.non-existing.fundi.yaml"
 	default:
-		return
+		return errors.New("unknown input")
 	}
+
+	return nil
 }
