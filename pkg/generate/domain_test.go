@@ -106,3 +106,96 @@ func TestGetAllDirectories(t *testing.T) {
 		})
 	}
 }
+
+func TestGetFilesSkipTemplates(t *testing.T) {
+	tests := map[string]struct {
+		expectedFiles []string
+		hasError      bool
+		targetErr     error
+		reader        FundiFileReader
+	}{
+		"has valid structure": {
+			expectedFiles: []string{
+				"funditest/docker-compose.yml",
+				"funditest/README.md",
+				"funditest/docs/index.html",
+				"funditest/pkg/app/doc.go",
+			},
+			hasError: false,
+			reader:   FundiFileReaderFunc(reader(t)),
+		},
+		"has empty structure": {
+			expectedFiles: nil,
+			hasError:      false,
+			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				t.Helper()
+
+				return new(FundiFile), nil
+			}),
+		},
+		"structure is a slice of strings": {
+			expectedFiles: nil,
+			hasError:      true,
+			targetErr:     errors.New("unexpected kind: string"),
+			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				t.Helper()
+				cfg := new(FundiFile)
+				cfg.Structure = []interface{}{"docker-compose.yml", "README.md"}
+
+				return cfg, nil
+			}),
+		},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg, err := tc.reader.Read()
+			checkError(t, err)
+
+			actualFiles, err := getFilesSkipTemplates(cfg.Structure)
+			assert.Equal(t, tc.expectedFiles, actualFiles)
+
+			if tc.hasError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGenerateEmptyFiles(t *testing.T) {
+	tests := map[string]struct {
+		paths         []string
+		expectedFiles map[string][]byte
+	}{
+		"paths provided": {
+			paths: []string{
+				"funditest/README.md",
+				"funditest/docker-compose.yml",
+			},
+			expectedFiles: map[string][]byte{
+				"funditest/README.md":          []byte(""),
+				"funditest/docker-compose.yml": []byte(""),
+			},
+		},
+		"no paths provided": {
+			paths:         []string{},
+			expectedFiles: make(map[string][]byte),
+		},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			actualFiles := generateEmptyFiles(tc.paths)
+			assert.Equal(t, tc.expectedFiles, actualFiles)
+		})
+	}
+}
