@@ -100,6 +100,9 @@ func (specs *TestSpecifications) MustClearState(scenario *godog.Scenario) {
 	specs.log.Info(fmt.Sprintf("clear any previous state before scenario: %s", scenario.Name))
 	specs.out = &out{}
 	specs.in = &in{}
+	if err := afero.NewOsFs().RemoveAll("./funditest"); err != nil {
+		specs.log.Fatal("failed to remove test directory hierarchy", zap.Error(err))
+	}
 }
 
 func (specs TestSpecifications) commandOutput() string {
