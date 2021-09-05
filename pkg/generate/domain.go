@@ -135,7 +135,7 @@ func getFilesSkipTemplates(structure []interface{}) ([]string, error) {
 					files = append(files, parent+string(os.PathSeparator)+file)
 				}
 			} else if isFile(cast.ToStringMap(item)) {
-				files = append(files, cast.ToString(dict["file"])+"."+cast.ToString(dict["extension"]))
+				files = append(files, cast.ToString(dict["file"]))
 			}
 		default:
 			return nil, errors.Errorf("unexpected kind: %s", kind)
