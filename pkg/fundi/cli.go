@@ -118,10 +118,10 @@ func newScaffoldCommand(
 
 	cmd.Flags().StringVarP(
 		&reader.(*ymlConfig).Flag.file,
-		"file",
-		"f",
+		"use-config",
+		"c",
 		"./.fundi.yaml",
-		"file path to .fundi.yaml",
+		"path to fundi config file",
 	)
 
 	return cmd
