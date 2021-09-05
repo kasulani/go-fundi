@@ -2,6 +2,7 @@ package generate
 
 import (
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -21,6 +22,10 @@ type (
 	}
 
 	mockHierarchyCreator struct {
+		test       *testing.T
+		fileSystem afero.Fs
+	}
+	mockFileCreator struct {
 		test       *testing.T
 		fileSystem afero.Fs
 	}
@@ -147,4 +152,99 @@ func (hc *mockHierarchyCreator) CreateHierarchy(hierarchy []string) error {
 	}
 
 	return nil
+}
+
+func TestEmptyFiles_UseCase(t *testing.T) {
+	tests := map[string]struct {
+		reader        FundiFileReader
+		fCreator      FileCreator
+		hasError      bool
+		expectedFiles []string
+	}{
+		"happy path": {
+			reader: FundiFileReaderFunc(reader(t)),
+			fCreator: &mockFileCreator{
+				test:       t,
+				fileSystem: afero.NewMemMapFs(),
+			},
+			hasError: false,
+			expectedFiles: []string{
+				"funditest/docker-compose.yml",
+				"funditest/README.md",
+				"funditest/docs/index.html",
+				"funditest/pkg/app/doc.go",
+			},
+		},
+		"fundi file reader fails": {
+			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				t.Helper()
+
+				return nil, errors.New("read-error")
+			}),
+			hasError: true,
+		},
+		"getFilesSkipTemplates fails": {
+			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				t.Helper()
+				cfg := new(FundiFile)
+				cfg.Structure = []interface{}{"docker-compose.yml", "README.md"}
+
+				return cfg, nil
+			}),
+			hasError: true,
+		},
+		"CreateFiles fails": {
+			reader: FundiFileReaderFunc(reader(t)),
+			fCreator: FileCreatorFunc(func(files map[string][]byte) error {
+				return errors.New("failed to add files to directory structure")
+			}),
+			hasError: true,
+		},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			emptyFiles := EmptyFiles{
+				fileReader: tc.reader,
+				fCreator:   tc.fCreator,
+			}
+
+			err := emptyFiles.UseCase()
+
+			if tc.hasError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				tc.fCreator.(*mockFileCreator).assertCreatedFiles(tc.expectedFiles)
+			}
+		})
+	}
+}
+
+func (mf *mockFileCreator) CreateFiles(files map[string][]byte) error {
+	mf.test.Helper()
+
+	for name, data := range files {
+		mf.test.Logf("creating file: %s...", name)
+
+		if err := afero.WriteFile(mf.fileSystem, name, data, 0644); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (mf *mockFileCreator) assertCreatedFiles(filenames []string) {
+	mf.test.Helper()
+
+	for _, name := range filenames {
+		info, err := mf.fileSystem.Stat(name)
+		assert.False(mf.test, info.IsDir())
+		assert.False(mf.test, os.IsNotExist(err))
+	}
 }

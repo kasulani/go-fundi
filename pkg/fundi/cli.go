@@ -38,8 +38,10 @@ type (
 	// RootCommand of the cli application.
 	RootCommand     Command
 	scaffoldCommand Command
+	generateCommand Command
+	filesCommand    Command
 
-	ymlFile struct {
+	configFile struct {
 		Version  int `yaml:"version"`
 		Metadata struct {
 			Name string `yaml:"name"`
@@ -48,14 +50,19 @@ type (
 		Structure []interface{} `yaml:"structure"`
 	}
 
-	fileReader struct {
+	ymlConfig struct {
 		fs      afero.Fs
-		ymlFile *ymlFile
+		file    *configFile
 		spinner *spinner
 		Flag    struct{ file string }
 	}
 
 	directoryCreator struct {
+		spinner *spinner
+		fs      afero.Fs
+	}
+
+	filesCreator struct {
 		spinner *spinner
 		fs      afero.Fs
 	}
@@ -66,10 +73,13 @@ func provideCliCommands() di.Option {
 		di.Provide(afero.NewOsFs),
 		di.Provide(newSpinner),
 		di.Provide(newDirectoryCreator, di.As(new(generate.HierarchyCreator))),
-		di.Provide(newYmlFileReader, di.As(new(generate.FundiFileReader))),
+		di.Provide(newFilesCreator, di.As(new(generate.FileCreator))),
+		di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
 		generate.ProvideUseCases(),
 		di.Provide(newRootCommand),
+		di.Provide(newFilesCommand),
 		di.Provide(newScaffoldCommand, di.As(new(Cmd))),
+		di.Provide(newGenerateCommand, di.As(new(Cmd))),
 	)
 }
 
@@ -107,21 +117,81 @@ func newScaffoldCommand(
 	}
 
 	cmd.Flags().StringVarP(
-		&reader.(*fileReader).Flag.file,
-		"file",
-		"f",
+		&reader.(*ymlConfig).Flag.file,
+		"use-config",
+		"c",
 		"./.fundi.yaml",
-		"file path to .fundi.yaml",
+		"path to fundi config file",
 	)
 
 	return cmd
+}
+
+func newFilesCommand(ctx context.Context, emptyFiles *generate.EmptyFiles) *filesCommand {
+	cmd := &filesCommand{
+		Command: &cobra.Command{
+			Use:     "files",
+			Aliases: []string{"file", "fil"},
+			Short:   "add generated files to the project directory structure",
+			Long:    `use this command to add generated files to the project directory as specified in the .fundi.yml file`,
+			Run: func(cmd *cobra.Command, args []string) {
+				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
+				if err != nil {
+					println(err)
+				}
+
+				switch skipTemplates {
+				case true:
+					if err := emptyFiles.UseCase(); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+				case false:
+					fmt.Println("using templates")
+				}
+				os.Exit(0)
+			},
+		},
+		ctx: ctx,
+	}
+
+	cmd.Flags().Bool("skip-templates", false, "generate empty files")
+
+	return cmd
+}
+
+func newGenerateCommand(ctx context.Context, reader generate.FundiFileReader, filesCmd *filesCommand) *generateCommand {
+	genCmd := &generateCommand{
+		Command: &cobra.Command{
+			Use:     "generate",
+			Example: "generate files",
+			Aliases: []string{"gene", "gen"},
+			Short:   "generate project assets",
+			Long:    `generate project assets`,
+		},
+		ctx: ctx,
+	}
+	genCmd.AddCommand(filesCmd.Command)
+	genCmd.PersistentFlags().StringVarP(
+		&reader.(*ymlConfig).Flag.file,
+		"use-config",
+		"c",
+		"./.fundi.yaml",
+		"path to fundi config file",
+	)
+
+	return genCmd
 }
 
 func (sc *scaffoldCommand) AddTo(root *RootCommand) {
 	root.AddCommand(sc.Command)
 }
 
-func (file *ymlFile) toFundiFile() *generate.FundiFile {
+func (gc *generateCommand) AddTo(root *RootCommand) {
+	root.AddCommand(gc.Command)
+}
+
+func (file *configFile) asFundiFile() *generate.FundiFile {
 	ff := new(generate.FundiFile)
 
 	ff.Metadata.Name = file.Metadata.Name
@@ -131,10 +201,10 @@ func (file *ymlFile) toFundiFile() *generate.FundiFile {
 	return ff
 }
 
-func newYmlFileReader(fs afero.Fs, tracker *spinner) *fileReader {
-	return &fileReader{
+func newYmlConfig(fs afero.Fs, tracker *spinner) *ymlConfig {
+	return &ymlConfig{
 		fs:      fs,
-		ymlFile: new(ymlFile),
+		file:    new(configFile),
 		spinner: tracker,
 		Flag: struct {
 			file string
@@ -142,7 +212,7 @@ func newYmlFileReader(fs afero.Fs, tracker *spinner) *fileReader {
 	}
 }
 
-func (reader *fileReader) Read() (*generate.FundiFile, error) {
+func (reader *ymlConfig) Read() (*generate.FundiFile, error) {
 	spin := reader.spinner.start("Reading fundi file...")
 	data, err := afero.ReadFile(reader.fs, reader.Flag.file)
 	if err != nil {
@@ -153,14 +223,14 @@ func (reader *fileReader) Read() (*generate.FundiFile, error) {
 	spin.message("Reading fundi file: finished ✓").asSuccessful()
 
 	spin = reader.spinner.start("Unmarshalling file data...")
-	if err := yaml.Unmarshal(data, reader.ymlFile); err != nil {
+	if err := yaml.Unmarshal(data, reader.file); err != nil {
 		spin.message("Unmarshalling file data: failed ✗").asFailure()
 
 		return nil, err
 	}
 	spin.message("Unmarshalling file data: finished ✓").asSuccessful()
 
-	return reader.ymlFile.toFundiFile(), err
+	return reader.file.asFundiFile(), err
 }
 
 func newDirectoryCreator(fs afero.Fs, tracker *spinner) *directoryCreator {
@@ -209,4 +279,23 @@ func (sp *spinner) asSuccessful() {
 
 func (sp *spinner) asFailure() {
 	sp.printer.Fail()
+}
+
+func newFilesCreator(fs afero.Fs, tracker *spinner) *filesCreator {
+	return &filesCreator{spinner: tracker, fs: fs}
+}
+
+func (creator *filesCreator) CreateFiles(files map[string][]byte) error {
+	spin := creator.spinner.start("Creating files...")
+	for name, data := range files {
+		spin.message(fmt.Sprintf("Creating files: %s...", name))
+		if err := afero.WriteFile(creator.fs, name, data, 0644); err != nil {
+			spin.message("Creating files: failed ✗").asFailure()
+
+			return err
+		}
+	}
+	spin.message("Creating files: finished ✓").asSuccessful()
+
+	return nil
 }
