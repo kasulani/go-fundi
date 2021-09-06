@@ -7,11 +7,12 @@ import (
 	"os"
 
 	"github.com/goava/di"
-	"github.com/kasulani/go-fundi/pkg/generate"
 	"github.com/pterm/pterm"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+
+	"github.com/kasulani/go-fundi/pkg/generate"
 )
 
 type (
@@ -24,7 +25,7 @@ type (
 
 	// Cmd interface defines AddTo method.
 	Cmd interface {
-		AddTo(root *RootCommand)
+		AddTo(root *rootCommand)
 	}
 
 	// Commands is a slice of Cmd.
@@ -35,8 +36,8 @@ type (
 		printer *pterm.SpinnerPrinter
 	}
 
-	// RootCommand of the cli application.
-	RootCommand     Command
+	// rootCommand of the cli application.
+	rootCommand     Command
 	scaffoldCommand Command
 	generateCommand Command
 	filesCommand    Command
@@ -83,8 +84,8 @@ func provideCliCommands() di.Option {
 	)
 }
 
-func newRootCommand() *RootCommand {
-	return &RootCommand{
+func newRootCommand() *rootCommand {
+	return &rootCommand{
 		Command: &cobra.Command{
 			Use:     "fundi",
 			Short:   "fundi is a scaffolding and code generation cli tool",
@@ -183,11 +184,11 @@ func newGenerateCommand(ctx context.Context, reader generate.FundiFileReader, fi
 	return genCmd
 }
 
-func (sc *scaffoldCommand) AddTo(root *RootCommand) {
+func (sc *scaffoldCommand) AddTo(root *rootCommand) {
 	root.AddCommand(sc.Command)
 }
 
-func (gc *generateCommand) AddTo(root *RootCommand) {
+func (gc *generateCommand) AddTo(root *rootCommand) {
 	root.AddCommand(gc.Command)
 }
 
