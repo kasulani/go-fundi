@@ -22,6 +22,13 @@ type (
 		fileReader FundiFileReader
 		fCreator   FileCreator
 	}
+
+	// FilesFromTemplates use case type.
+	FilesFromTemplates struct {
+		fileReader FundiFileReader
+		fCreator   FileCreator
+		parser     TemplateParser
+	}
 )
 
 // ProvideUseCases returns a DI container option with use case types.
@@ -29,10 +36,11 @@ func ProvideUseCases() di.Option {
 	return di.Options(
 		di.Provide(NewDirectoryStructure),
 		di.Provide(NewEmptyFiles),
+		di.Provide(NewFilesFromTemplates),
 	)
 }
 
-// NewDirectoryStructure returns an instance of DirectoryStructure.
+// NewDirectoryStructure returns an instance of DirectoryStructure use case.
 func NewDirectoryStructure(
 	reader FundiFileReader,
 	creator HierarchyCreator) *DirectoryStructure {
@@ -42,11 +50,20 @@ func NewDirectoryStructure(
 	}
 }
 
-// NewEmptyFiles returns an instance of EmptyFiles.
+// NewEmptyFiles returns an instance of EmptyFiles use case.
 func NewEmptyFiles(reader FundiFileReader, creator FileCreator) *EmptyFiles {
 	return &EmptyFiles{
 		fileReader: reader,
 		fCreator:   creator,
+	}
+}
+
+// NewFilesFromTemplates returns an instance of FilesFromTemplates use case.
+func NewFilesFromTemplates(reader FundiFileReader, creator FileCreator, parser TemplateParser) *FilesFromTemplates {
+	return &FilesFromTemplates{
+		fileReader: reader,
+		fCreator:   creator,
+		parser:     parser,
 	}
 }
 
@@ -62,7 +79,9 @@ func (ps *DirectoryStructure) UseCase() error {
 		return errors.Wrap(err, "failed to get directories")
 	}
 
-	if err := ps.hCreator.CreateHierarchy(generateHierarchy(fundiFile.Metadata.Path, directories)); err != nil {
+	if err := ps.hCreator.CreateHierarchy(
+		generateHierarchy(fundiFile.Metadata.Path, directories).([]string),
+	); err != nil {
 		return errors.Wrap(err, "failed to create directory hierarchy")
 	}
 
@@ -78,13 +97,41 @@ func (ef *EmptyFiles) UseCase() error {
 
 	files, err := getFilesSkipTemplates(fundiFile.Structure)
 	if err != nil {
-		return errors.Wrap(err, "failed to get directories")
+		return errors.Wrap(err, "failed to get files")
 	}
 
 	if err := ef.fCreator.CreateFiles(
-		generateEmptyFiles(generateHierarchy(fundiFile.Metadata.Path, files)),
+		generateEmptyFiles(
+			generateHierarchy(fundiFile.Metadata.Path, files).([]string),
+		),
 	); err != nil {
-		return errors.Wrap(err, "failed to add empty files to directory structure")
+		return errors.Wrap(err, "failed to create empty files")
+	}
+
+	return nil
+}
+
+// UseCase to generate files from templates.
+func (f *FilesFromTemplates) UseCase() error {
+	fundiFile, err := f.fileReader.Read()
+	if err != nil {
+		return errors.Wrap(err, "failed to read fundi file")
+	}
+
+	filesAndTemplates, err := getFilesAndTemplates(fundiFile.Structure)
+	if err != nil {
+		return errors.Wrap(err, "failed to get files and their templates")
+	}
+
+	parsedFiles, err := f.parser.ParseTemplates(filesAndTemplates, fundiFile.Metadata.Templates.Path)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse templates")
+	}
+
+	if err := f.fCreator.CreateFiles(
+		generateHierarchy(fundiFile.Metadata.Path, parsedFiles).(map[string][]byte),
+	); err != nil {
+		return errors.Wrap(err, "failed to create files")
 	}
 
 	return nil

@@ -1,26 +1,29 @@
 version: 1
 metadata:
   name: funditest
-  path: .
+  path: "."
+  templates:
+    archive: local
+    path: "./testdata"
 structure:
   - folder: funditest # this is the project root directory.
     contains:
-      - file: docker-compose
-        extension: yml
-      - file: README
-        extension: md
+      - file: docker-compose.yml
+      - file: README.md
       - folder: cmd
       - folder: docker-files
       - folder: docs
         contains:
-          - file: index
-            extension: html
+          - file: index.html
       - folder: features
       - folder: pkg
         contains:
           - folder: app
             contains:
-              - file: doc
-                extension: go
+              - file: doc.go
+                template:
+                  name: doc.go.tmpl
+                  values:
+                    package: app
           - folder: behaviour
           - folder: domain

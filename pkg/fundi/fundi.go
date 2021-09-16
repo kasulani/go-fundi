@@ -44,7 +44,7 @@ func Container(selector string) *di.Container {
 }
 
 // StartCLI is a high level cli entry function.
-func StartCLI(root *RootCommand) error {
+func StartCLI(root *rootCommand) error {
 	return root.Execute()
 }
 
@@ -61,7 +61,7 @@ func newConfig() *config {
 }
 
 // RegisterCliCommands adds all the sub commands to the root command.
-func RegisterCliCommands(root *RootCommand, commands Commands) {
+func RegisterCliCommands(root *rootCommand, commands Commands) {
 	for _, command := range commands {
 		command.AddTo(root)
 	}

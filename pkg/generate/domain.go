@@ -11,14 +11,11 @@ import (
 type (
 	// FundiFile is a model of the .fundi.yaml file.
 	FundiFile struct {
-		// Metadata of the project.
 		Metadata struct {
-			// Name of the project.
-			Name string
-			// Path is the location of the root directory.
-			Path string
+			Name      string
+			Path      string
+			Templates Templates
 		}
-		// Structure of the project.
 		Structure []interface{}
 	}
 
@@ -45,6 +42,25 @@ type (
 
 	// FileCreatorFunc is an adapter type to allow use of ordinary functions as directory FileCreator.
 	FileCreatorFunc func(files map[string][]byte) error
+
+	// TemplateFile represents a template file.
+	TemplateFile struct {
+		Name   string
+		Values map[string]interface{}
+	}
+
+	// Templates represents the template configs in the metadata section of the .fundi.yaml file.
+	Templates struct {
+		Path string
+	}
+
+	// TemplateParser interface defines ParseTemplates method.
+	TemplateParser interface {
+		ParseTemplates(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error)
+	}
+
+	// TemplateParserFunc is an adapter type to allow use of ordinary functions as directory TemplateParser.
+	TemplateParserFunc func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error)
 )
 
 // CreateHierarchy creates a directory hierarchy.
@@ -62,14 +78,32 @@ func (fn FileCreatorFunc) CreateFiles(files map[string][]byte) error {
 	return fn(files)
 }
 
-func generateHierarchy(root string, dirs []string) []string {
-	hierarchy := make([]string, 0, len(dirs))
+// ParseTemplates wraps the template parser function fn.
+func (fn TemplateParserFunc) ParseTemplates(
+	data map[string]*TemplateFile,
+	templatePath string,
+) (map[string][]byte, error) {
+	return fn(data, templatePath)
+}
 
-	for _, dir := range dirs {
-		hierarchy = append(hierarchy, root+string(os.PathSeparator)+dir)
+func generateHierarchy(root string, data interface{}) interface{} {
+	switch reflect.ValueOf(data).Kind() {
+	case reflect.Slice:
+		dirs := cast.ToStringSlice(data)
+		hierarchy := make([]string, 0, len(dirs))
+		for _, dir := range dirs {
+			hierarchy = append(hierarchy, root+string(os.PathSeparator)+cast.ToString(dir))
+		}
+		return hierarchy
+	case reflect.Map:
+		hierarchy := make(map[string][]byte)
+		for name, byteData := range data.(map[string][]byte) {
+			hierarchy[root+string(os.PathSeparator)+name] = byteData
+		}
+		return hierarchy
 	}
 
-	return hierarchy
+	return nil
 }
 
 func getAllDirectories(structure []interface{}) ([]string, error) {
@@ -135,7 +169,7 @@ func getFilesSkipTemplates(structure []interface{}) ([]string, error) {
 					files = append(files, parent+string(os.PathSeparator)+file)
 				}
 			} else if isFile(cast.ToStringMap(item)) {
-				files = append(files, cast.ToString(dict["file"])+"."+cast.ToString(dict["extension"]))
+				files = append(files, cast.ToString(dict["file"]))
 			}
 		default:
 			return nil, errors.Errorf("unexpected kind: %s", kind)
@@ -158,4 +192,38 @@ func generateEmptyFiles(paths []string) map[string][]byte {
 	}
 
 	return files
+}
+
+func getFilesAndTemplates(structure []interface{}) (map[string]*TemplateFile, error) {
+	files := make(map[string]*TemplateFile)
+	for _, item := range structure {
+		kind := reflect.ValueOf(item).Kind()
+		switch kind {
+		case reflect.Map:
+			dict := cast.ToStringMap(item)
+			if isDirectory(cast.ToStringMap(item)) && hasContents(cast.ToStringMap(item)) {
+				innerFiles, err := getFilesAndTemplates(cast.ToSlice(dict["contains"]))
+				if err != nil {
+					return innerFiles, err
+				}
+
+				parent := cast.ToString(dict["folder"])
+				for name, tpl := range innerFiles {
+					files[parent+string(os.PathSeparator)+name] = tpl
+				}
+			} else if isFile(cast.ToStringMap(item)) {
+				files[cast.ToString(dict["file"])] = templateFile(cast.ToStringMap(dict["template"]))
+			}
+		default:
+			return nil, errors.Errorf("unexpected kind: %s", kind)
+		}
+	}
+	return files, nil
+}
+
+func templateFile(tpl map[string]interface{}) *TemplateFile {
+	return &TemplateFile{
+		Name:   cast.ToString(tpl["name"]),
+		Values: cast.ToStringMap(tpl["values"]),
+	}
 }
