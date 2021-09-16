@@ -12,11 +12,13 @@ import (
 )
 
 type (
-	testFile struct {
-		Version  int `yaml:"version"`
+	testConfigFile struct {
 		Metadata struct {
-			Name string `yaml:"name"`
-			Path string `yaml:"path"`
+			Name      string `yaml:"name"`
+			Path      string `yaml:"path"`
+			Templates struct {
+				Path string `yaml:"path"`
+			} `yaml:"templates"`
 		} `yaml:"metadata"`
 		Structure []interface{} `yaml:"structure"`
 	}
@@ -110,7 +112,7 @@ func reader(t *testing.T) func() (*FundiFile, error) {
 		data, err := ioutil.ReadFile(".test.fundi.yaml")
 		checkError(t, err)
 
-		file := new(testFile)
+		file := new(testConfigFile)
 
 		err = yaml.Unmarshal(data, file)
 		if err != nil {
@@ -121,11 +123,12 @@ func reader(t *testing.T) func() (*FundiFile, error) {
 	}
 }
 
-func (ts *testFile) toFundiFile() *FundiFile {
+func (ts *testConfigFile) toFundiFile() *FundiFile {
 	ff := new(FundiFile)
 
 	ff.Metadata.Name = ts.Metadata.Name
 	ff.Metadata.Path = ts.Metadata.Path
+	ff.Metadata.Templates.Path = ts.Metadata.Templates.Path
 	ff.Structure = ts.Structure
 
 	return ff
@@ -246,5 +249,101 @@ func (mf *mockFileCreator) assertCreatedFiles(filenames []string) {
 		info, err := mf.fileSystem.Stat(name)
 		assert.False(mf.test, info.IsDir())
 		assert.False(mf.test, os.IsNotExist(err))
+	}
+}
+
+func TestNewFilesFromTemplates(t *testing.T) {
+	tests := map[string]struct {
+		reader   FundiFileReader
+		fCreator FileCreator
+		parser   TemplateParser
+		hasError bool
+		want     []string
+	}{
+		"happy path": {
+			reader: FundiFileReaderFunc(reader(t)),
+			fCreator: &mockFileCreator{
+				test:       t,
+				fileSystem: afero.NewMemMapFs(),
+			},
+			parser: TemplateParserFunc(func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error) {
+				parsedFiles := make(map[string][]byte)
+				for fileName, _ := range data {
+					parsedFiles[fileName] = []byte("test")
+				}
+
+				return parsedFiles, nil
+			}),
+			hasError: false,
+			want: []string{
+				"funditest/docker-compose.yml",
+				"funditest/README.md",
+				"funditest/docs/index.html",
+				"funditest/pkg/app/doc.go",
+			},
+		},
+		"fundi file reader fails": {
+			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				t.Helper()
+
+				return nil, errors.New("read-error")
+			}),
+			hasError: true,
+		},
+		"getFilesAndTemplates fails": {
+			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				t.Helper()
+				cfg := new(FundiFile)
+				cfg.Structure = []interface{}{"docker-compose.yml", "README.md"}
+
+				return cfg, nil
+			}),
+			hasError: true,
+		},
+		"ParseTemplates fails": {
+			reader: FundiFileReaderFunc(reader(t)),
+			parser: TemplateParserFunc(func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error) {
+				return nil, errors.New("parse-error")
+			}),
+			hasError: true,
+		},
+		"CreateFiles fails": {
+			reader: FundiFileReaderFunc(reader(t)),
+			fCreator: FileCreatorFunc(func(files map[string][]byte) error {
+				return errors.New("failed to add files to directory structure")
+			}),
+			parser: TemplateParserFunc(func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error) {
+				parsedFiles := make(map[string][]byte)
+				for fileName, _ := range data {
+					parsedFiles[fileName] = []byte("test")
+				}
+
+				return parsedFiles, nil
+			}),
+			hasError: true,
+		},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			filesFromTemplates := FilesFromTemplates{
+				fileReader: tc.reader,
+				fCreator:   tc.fCreator,
+				parser:     tc.parser,
+			}
+
+			err := filesFromTemplates.UseCase()
+
+			if tc.hasError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				tc.fCreator.(*mockFileCreator).assertCreatedFiles(tc.want)
+			}
+		})
 	}
 }

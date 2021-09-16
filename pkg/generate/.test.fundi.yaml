@@ -1,7 +1,10 @@
 version: 1
 metadata:
   name: funditest
-  path: .
+  path: "."
+  templates:
+    archive: local
+    path: "./testdata"
 structure:
   - folder: funditest # this is the project root directory.
     contains:
@@ -18,5 +21,9 @@ structure:
           - folder: app
             contains:
               - file: doc.go
+                template:
+                  name: doc.go.tmpl
+                  values:
+                    package: app
           - folder: behaviour
           - folder: domain
