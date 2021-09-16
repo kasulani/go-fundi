@@ -15,19 +15,30 @@ func checkError(t *testing.T, err error) {
 
 func TestGenerateHierarchy(t *testing.T) {
 	tests := map[string]struct {
-		root              string
-		directories       []string
-		expectedHierarchy []string
+		root string
+		data interface{}
+		want interface{}
 	}{
-		"non nil parameters": {
-			root:              "./testing",
-			directories:       []string{"cmd", "pkg"},
-			expectedHierarchy: []string{"./testing/cmd", "./testing/pkg"},
+		"data as a slice": {
+			root: "./testing",
+			data: []string{"cmd", "pkg"},
+			want: []string{"./testing/cmd", "./testing/pkg"},
+		},
+		"data as a map": {
+			root: "./testing",
+			data: map[string][]byte{
+				"app.go": []byte("app-file-data"),
+				"doc.go": []byte("doc-file-data"),
+			},
+			want: map[string][]byte{
+				"./testing/app.go": []byte("app-file-data"),
+				"./testing/doc.go": []byte("doc-file-data"),
+			},
 		},
 		"nil parameters": {
-			root:              "",
-			directories:       []string{},
-			expectedHierarchy: []string{},
+			root: "",
+			data: nil,
+			want: nil,
 		},
 	}
 
@@ -36,8 +47,8 @@ func TestGenerateHierarchy(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			actualHierarchy := generateHierarchy(tc.root, tc.directories)
-			assert.Equal(t, tc.expectedHierarchy, actualHierarchy)
+			actual := generateHierarchy(tc.root, tc.data)
+			assert.Equal(t, tc.want, actual)
 		})
 	}
 }
@@ -196,6 +207,81 @@ func TestGenerateEmptyFiles(t *testing.T) {
 			t.Parallel()
 			actualFiles := generateEmptyFiles(tc.paths)
 			assert.Equal(t, tc.expectedFiles, actualFiles)
+		})
+	}
+}
+
+func TestGetFilesAndTemplates(t *testing.T) {
+	tests := map[string]struct {
+		want      map[string]*TemplateFile
+		hasError  bool
+		targetErr error
+		reader    FundiFileReader
+	}{
+		"has valid structure": {
+			want: map[string]*TemplateFile{
+				"funditest/docker-compose.yml": {
+					Name:   "",
+					Values: map[string]interface{}{},
+				},
+				"funditest/README.md": {
+					Name:   "",
+					Values: map[string]interface{}{},
+				},
+				"funditest/docs/index.html": {
+					Name:   "",
+					Values: map[string]interface{}{},
+				},
+				"funditest/pkg/app/doc.go": {
+					Name: "doc.go.tmpl",
+					Values: map[string]interface{}{
+						"package": "app",
+					},
+				},
+			},
+			hasError: false,
+			reader:   FundiFileReaderFunc(reader(t)),
+		},
+		"has empty structure": {
+			want:     map[string]*TemplateFile{},
+			hasError: false,
+			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				t.Helper()
+
+				return new(FundiFile), nil
+			}),
+		},
+		"structure is a slice of strings": {
+			want:      nil,
+			hasError:  true,
+			targetErr: errors.New("unexpected kind: string"),
+			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				t.Helper()
+				cfg := new(FundiFile)
+				cfg.Structure = []interface{}{"docker-compose.yml", "README.md"}
+
+				return cfg, nil
+			}),
+		},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg, err := tc.reader.Read()
+			checkError(t, err)
+
+			actual, err := getFilesAndTemplates(cfg.Structure)
+			assert.Equal(t, tc.want, actual)
+
+			if tc.hasError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
