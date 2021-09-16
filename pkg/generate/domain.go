@@ -79,7 +79,10 @@ func (fn FileCreatorFunc) CreateFiles(files map[string][]byte) error {
 }
 
 // ParseTemplates wraps the template parser function fn.
-func (fn TemplateParserFunc) ParseTemplates(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error) {
+func (fn TemplateParserFunc) ParseTemplates(
+	data map[string]*TemplateFile,
+	templatePath string,
+) (map[string][]byte, error) {
 	return fn(data, templatePath)
 }
 
