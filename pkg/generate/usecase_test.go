@@ -109,7 +109,7 @@ func TestProjectStructure_UseCase(t *testing.T) {
 func reader(t *testing.T) func() (*FundiFile, error) {
 	t.Helper()
 	return func() (*FundiFile, error) {
-		data, err := ioutil.ReadFile(".test.fundi.yaml")
+		data, err := ioutil.ReadFile("../../testdata/.test.fundi.yaml")
 		checkError(t, err)
 
 		file := new(testConfigFile)

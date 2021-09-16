@@ -20,9 +20,9 @@ func (specs *TestSpecifications) setInitialContext(input string) error {
 	specs.log.Info("set initial context")
 	switch input {
 	case "a good fundi file":
-		specs.in.File = specs.workingDirectory() + "/pkg/behaviour/.bdd.test.fundi.yaml"
+		specs.in.File = specs.workingDirectory() + string(os.PathSeparator) + "testdata/.test.fundi.yaml"
 	case "a bad fundi file":
-		specs.in.File = specs.workingDirectory() + "/pkg/behaviour/.non-existing.fundi.yaml"
+		specs.in.File = specs.workingDirectory() + string(os.PathSeparator) + "testdata/.non-existing.fundi.yaml"
 	default:
 		return errors.New("unknown input")
 	}
