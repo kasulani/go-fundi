@@ -133,7 +133,7 @@ func newScaffoldCommand(
 
 func newFilesCommand(
 	ctx context.Context,
-	emptyFiles *generate.EmptyFiles,
+	filesSkipTemplates *generate.FilesSkipTemplates,
 	filesFromTemplates *generate.FilesFromTemplates) *filesCommand {
 	cmd := &filesCommand{
 		Command: &cobra.Command{
@@ -149,7 +149,7 @@ func newFilesCommand(
 
 				switch skipTemplates {
 				case true:
-					if err := emptyFiles.UseCase(); err != nil {
+					if err := filesSkipTemplates.UseCase(); err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}

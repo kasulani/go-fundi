@@ -211,12 +211,12 @@ func TestEmptyFiles_UseCase(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			emptyFiles := EmptyFiles{
+			skipTemplates := FilesSkipTemplates{
 				fileReader: tc.reader,
 				fCreator:   tc.fCreator,
 			}
 
-			err := emptyFiles.UseCase()
+			err := skipTemplates.UseCase()
 
 			if tc.hasError {
 				assert.Error(t, err)

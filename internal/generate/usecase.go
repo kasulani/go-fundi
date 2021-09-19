@@ -17,8 +17,8 @@ type (
 		structureCreator StructureCreator
 	}
 
-	// EmptyFiles use case type.
-	EmptyFiles struct {
+	// FilesSkipTemplates use case type.
+	FilesSkipTemplates struct {
 		fileReader FundiFileReader
 		fCreator   FileCreator
 	}
@@ -35,7 +35,7 @@ type (
 func ProvideUseCases() di.Option {
 	return di.Options(
 		di.Provide(NewDirectoryStructure),
-		di.Provide(NewEmptyFiles),
+		di.Provide(NewFilesSkipTemplates),
 		di.Provide(NewFilesFromTemplates),
 	)
 }
@@ -50,9 +50,9 @@ func NewDirectoryStructure(
 	}
 }
 
-// NewEmptyFiles returns an instance of EmptyFiles use case.
-func NewEmptyFiles(reader FundiFileReader, creator FileCreator) *EmptyFiles {
-	return &EmptyFiles{
+// NewFilesSkipTemplates returns an instance of FilesSkipTemplates use case.
+func NewFilesSkipTemplates(reader FundiFileReader, creator FileCreator) *FilesSkipTemplates {
+	return &FilesSkipTemplates{
 		fileReader: reader,
 		fCreator:   creator,
 	}
@@ -89,7 +89,7 @@ func (ps *DirectoryStructure) UseCase() error {
 }
 
 // UseCase to add empty files to an existing directory structure.
-func (ef *EmptyFiles) UseCase() error {
+func (ef *FilesSkipTemplates) UseCase() error {
 	fundiFile, err := ef.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
