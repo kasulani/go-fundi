@@ -36,7 +36,7 @@ type (
 func TestProjectStructure_UseCase(t *testing.T) {
 	tests := map[string]struct {
 		reader            FundiFileReader
-		hCreator          HierarchyCreator
+		hCreator          StructureCreator
 		hasError          bool
 		expectedHierarchy []string
 	}{
@@ -75,9 +75,9 @@ func TestProjectStructure_UseCase(t *testing.T) {
 			}),
 			hasError: true,
 		},
-		"CreateHierarchy fails": {
+		"CreateStructure fails": {
 			reader: FundiFileReaderFunc(reader(t)),
-			hCreator: HierarchyCreatorFunc(func(hierarchy []string) error {
+			hCreator: StructureCreatorFunc(func(hierarchy []string) error {
 				return errors.New("failed to create hierarchy")
 			}),
 			hasError: true,
@@ -91,8 +91,8 @@ func TestProjectStructure_UseCase(t *testing.T) {
 			t.Parallel()
 
 			generateStructure := DirectoryStructure{
-				fundiFile: tc.reader,
-				hCreator:  tc.hCreator,
+				fundiFile:        tc.reader,
+				structureCreator: tc.hCreator,
 			}
 
 			err := generateStructure.UseCase()
@@ -144,10 +144,10 @@ func (hc *mockHierarchyCreator) assertHierarchy(dirs []string) {
 	}
 }
 
-func (hc *mockHierarchyCreator) CreateHierarchy(hierarchy []string) error {
+func (hc *mockHierarchyCreator) CreateStructure(folders []string) error {
 	hc.test.Helper()
 
-	for _, h := range hierarchy {
+	for _, h := range folders {
 		hc.test.Logf("creating directory hierarchy: %s...", h)
 		if err := hc.fileSystem.MkdirAll(h, 0755); err != nil {
 			return err

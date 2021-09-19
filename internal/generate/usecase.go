@@ -13,8 +13,8 @@ type (
 
 	// DirectoryStructure use case type.
 	DirectoryStructure struct {
-		fundiFile FundiFileReader
-		hCreator  HierarchyCreator
+		fundiFile        FundiFileReader
+		structureCreator StructureCreator
 	}
 
 	// EmptyFiles use case type.
@@ -43,10 +43,10 @@ func ProvideUseCases() di.Option {
 // NewDirectoryStructure returns an instance of DirectoryStructure use case.
 func NewDirectoryStructure(
 	reader FundiFileReader,
-	creator HierarchyCreator) *DirectoryStructure {
+	creator StructureCreator) *DirectoryStructure {
 	return &DirectoryStructure{
-		fundiFile: reader,
-		hCreator:  creator,
+		fundiFile:        reader,
+		structureCreator: creator,
 	}
 }
 
@@ -79,7 +79,7 @@ func (ps *DirectoryStructure) UseCase() error {
 		return errors.Wrap(err, "failed to get directories")
 	}
 
-	if err := ps.hCreator.CreateHierarchy(
+	if err := ps.structureCreator.CreateStructure(
 		generateHierarchy(fundiFile.Metadata.Path, directories).([]string),
 	); err != nil {
 		return errors.Wrap(err, "failed to create directory hierarchy")

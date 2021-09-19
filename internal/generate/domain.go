@@ -19,13 +19,13 @@ type (
 		Structure []interface{}
 	}
 
-	// HierarchyCreator interface defines the CreateHierarchy method.
-	HierarchyCreator interface {
-		CreateHierarchy(hierarchy []string) error
+	// StructureCreator interface defines the CreateStructure method.
+	StructureCreator interface {
+		CreateStructure(folders []string) error
 	}
 
-	// HierarchyCreatorFunc is an adapter type to allow use of ordinary functions as directory HierarchyCreator.
-	HierarchyCreatorFunc func(hierarchy []string) error
+	// StructureCreatorFunc is an adapter type to allow use of ordinary functions as directory StructureCreator.
+	StructureCreatorFunc func(folders []string) error
 
 	// FundiFileReader interface defines the Read method.
 	FundiFileReader interface {
@@ -63,9 +63,9 @@ type (
 	TemplateParserFunc func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error)
 )
 
-// CreateHierarchy creates a directory hierarchy.
-func (maker HierarchyCreatorFunc) CreateHierarchy(hierarchy []string) error {
-	return maker(hierarchy)
+// CreateStructure creates a directory structure.
+func (fn StructureCreatorFunc) CreateStructure(folders []string) error {
+	return fn(folders)
 }
 
 // Read wraps the reader function fn.
