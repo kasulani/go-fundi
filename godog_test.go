@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/cucumber/godog"
-	"github.com/kasulani/go-fundi/pkg/behaviour"
+	"github.com/kasulani/go-fundi/internal/behaviour"
 )
 
 var specs *behaviour.TestSpecifications
