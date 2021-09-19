@@ -56,8 +56,10 @@ to hack away at the domain problem and provide a working prototype.
 To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
-
-Todo: add list things you need to use the software and how to install them.
+You need to install [pre-commit](https://pre-commit.com/#install). We use [pre-commit](https://pre-commit.com/) to add 
+git hooks scripts that run checks automatically on `git commit` command.
+After installing `pre-commit`, add the git hook scripts using the `pre-commit install` [command](https://pre-commit.com/#install).
+Click [here](https://pre-commit.com/#usage) to learn more about `pre-commit`.
 
 ### Installation
 

@@ -3,7 +3,7 @@ services:
   dev:
     build:
       context: .
-      dockerfile: docker-file/development/Dockerfile
+      dockerfile: dockerfiles/development/Dockerfile
       args:
         GO111MODULE: "on"
     container_name: fundi-dev
