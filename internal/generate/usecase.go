@@ -13,12 +13,12 @@ type (
 
 	// DirectoryStructure use case type.
 	DirectoryStructure struct {
-		fundiFile FundiFileReader
-		hCreator  HierarchyCreator
+		fundiFile        FundiFileReader
+		structureCreator StructureCreator
 	}
 
-	// EmptyFiles use case type.
-	EmptyFiles struct {
+	// FilesSkipTemplates use case type.
+	FilesSkipTemplates struct {
 		fileReader FundiFileReader
 		fCreator   FileCreator
 	}
@@ -35,7 +35,7 @@ type (
 func ProvideUseCases() di.Option {
 	return di.Options(
 		di.Provide(NewDirectoryStructure),
-		di.Provide(NewEmptyFiles),
+		di.Provide(NewFilesSkipTemplates),
 		di.Provide(NewFilesFromTemplates),
 	)
 }
@@ -43,16 +43,16 @@ func ProvideUseCases() di.Option {
 // NewDirectoryStructure returns an instance of DirectoryStructure use case.
 func NewDirectoryStructure(
 	reader FundiFileReader,
-	creator HierarchyCreator) *DirectoryStructure {
+	creator StructureCreator) *DirectoryStructure {
 	return &DirectoryStructure{
-		fundiFile: reader,
-		hCreator:  creator,
+		fundiFile:        reader,
+		structureCreator: creator,
 	}
 }
 
-// NewEmptyFiles returns an instance of EmptyFiles use case.
-func NewEmptyFiles(reader FundiFileReader, creator FileCreator) *EmptyFiles {
-	return &EmptyFiles{
+// NewFilesSkipTemplates returns an instance of FilesSkipTemplates use case.
+func NewFilesSkipTemplates(reader FundiFileReader, creator FileCreator) *FilesSkipTemplates {
+	return &FilesSkipTemplates{
 		fileReader: reader,
 		fCreator:   creator,
 	}
@@ -79,7 +79,7 @@ func (ps *DirectoryStructure) UseCase() error {
 		return errors.Wrap(err, "failed to get directories")
 	}
 
-	if err := ps.hCreator.CreateHierarchy(
+	if err := ps.structureCreator.CreateStructure(
 		generateHierarchy(fundiFile.Metadata.Path, directories).([]string),
 	); err != nil {
 		return errors.Wrap(err, "failed to create directory hierarchy")
@@ -89,7 +89,7 @@ func (ps *DirectoryStructure) UseCase() error {
 }
 
 // UseCase to add empty files to an existing directory structure.
-func (ef *EmptyFiles) UseCase() error {
+func (ef *FilesSkipTemplates) UseCase() error {
 	fundiFile, err := ef.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")

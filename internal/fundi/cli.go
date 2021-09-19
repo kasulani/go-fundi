@@ -64,7 +64,7 @@ type (
 		Flag    struct{ file string }
 	}
 
-	directoryCreator struct {
+	structureCreator struct {
 		spinner *spinner
 		fs      afero.Fs
 	}
@@ -84,14 +84,14 @@ func provideCliCommands() di.Option {
 	return di.Options(
 		di.Provide(afero.NewOsFs),
 		di.Provide(newSpinner),
-		di.Provide(newDirectoryCreator, di.As(new(generate.HierarchyCreator))),
+		di.Provide(newStructureCreator, di.As(new(generate.StructureCreator))),
 		di.Provide(newFilesCreator, di.As(new(generate.FileCreator))),
 		di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
 		di.Provide(newTemplateParser, di.As(new(generate.TemplateParser))),
 		generate.ProvideUseCases(),
 		di.Provide(newRootCommand),
 		di.Provide(newFilesCommand),
-		di.Provide(newScaffoldCommand, di.As(new(Cmd))),
+		di.Provide(newScaffoldCommand),
 		di.Provide(newGenerateCommand, di.As(new(Cmd))),
 	)
 }
@@ -109,8 +109,7 @@ func newRootCommand() *rootCommand {
 
 func newScaffoldCommand(
 	ctx context.Context,
-	generateStructure *generate.DirectoryStructure,
-	reader generate.FundiFileReader,
+	directoryStructure *generate.DirectoryStructure,
 ) *scaffoldCommand {
 	cmd := &scaffoldCommand{
 		Command: &cobra.Command{
@@ -119,7 +118,7 @@ func newScaffoldCommand(
 			Short:   "scaffold a new project directory structure only",
 			Long:    `use this command to generate a directory structure for a new project.`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := generateStructure.UseCase(); err != nil {
+				if err := directoryStructure.UseCase(); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -129,20 +128,12 @@ func newScaffoldCommand(
 		ctx: ctx,
 	}
 
-	cmd.Flags().StringVarP(
-		&reader.(*ymlConfig).Flag.file,
-		"use-config",
-		"c",
-		"./.fundi.yaml",
-		"path to fundi config file",
-	)
-
 	return cmd
 }
 
 func newFilesCommand(
 	ctx context.Context,
-	emptyFiles *generate.EmptyFiles,
+	filesSkipTemplates *generate.FilesSkipTemplates,
 	filesFromTemplates *generate.FilesFromTemplates) *filesCommand {
 	cmd := &filesCommand{
 		Command: &cobra.Command{
@@ -158,7 +149,7 @@ func newFilesCommand(
 
 				switch skipTemplates {
 				case true:
-					if err := emptyFiles.UseCase(); err != nil {
+					if err := filesSkipTemplates.UseCase(); err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
@@ -179,7 +170,12 @@ func newFilesCommand(
 	return cmd
 }
 
-func newGenerateCommand(ctx context.Context, reader generate.FundiFileReader, filesCmd *filesCommand) *generateCommand {
+func newGenerateCommand(
+	ctx context.Context,
+	reader generate.FundiFileReader,
+	filesCmd *filesCommand,
+	scaffoldCmd *scaffoldCommand,
+) *generateCommand {
 	genCmd := &generateCommand{
 		Command: &cobra.Command{
 			Use:     "generate",
@@ -190,6 +186,7 @@ func newGenerateCommand(ctx context.Context, reader generate.FundiFileReader, fi
 		},
 		ctx: ctx,
 	}
+	genCmd.AddCommand(scaffoldCmd.Command)
 	genCmd.AddCommand(filesCmd.Command)
 	genCmd.PersistentFlags().StringVarP(
 		&reader.(*ymlConfig).Flag.file,
@@ -200,10 +197,6 @@ func newGenerateCommand(ctx context.Context, reader generate.FundiFileReader, fi
 	)
 
 	return genCmd
-}
-
-func (sc *scaffoldCommand) AddTo(root *rootCommand) {
-	root.AddCommand(sc.Command)
 }
 
 func (gc *generateCommand) AddTo(root *rootCommand) {
@@ -253,13 +246,13 @@ func (reader *ymlConfig) Read() (*generate.FundiFile, error) {
 	return reader.file.asFundiFile(), err
 }
 
-func newDirectoryCreator(fs afero.Fs, tracker *spinner) *directoryCreator {
-	return &directoryCreator{spinner: tracker, fs: fs}
+func newStructureCreator(fs afero.Fs, tracker *spinner) *structureCreator {
+	return &structureCreator{spinner: tracker, fs: fs}
 }
 
-func (creator *directoryCreator) CreateHierarchy(hierarchy []string) error {
+func (creator *structureCreator) CreateStructure(folders []string) error {
 	spin := creator.spinner.start("Creating directory hierarchy...")
-	for _, h := range hierarchy {
+	for _, h := range folders {
 		spin.message(fmt.Sprintf("Creating directory hierarchy: %s...", h))
 		if err := creator.fs.MkdirAll(h, 0755); err != nil {
 			spin.message("Creating directory hierarchy: failed ✗").asFailure()

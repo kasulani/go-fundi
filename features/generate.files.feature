@@ -4,7 +4,7 @@ Feature: Add empty files to an existing project directory structure
     Given I have "a good fundi file"
     When I execute the cli command
     """
-    fundi scaffold --use-config {{.File}}
+    fundi generate scaffold --use-config {{.File}}
     """
     Then I must get an exit code 0
     When I execute the cli command
@@ -52,7 +52,7 @@ Feature: Add empty files to an existing project directory structure
     Given I have "a good fundi file"
     When I execute the cli command
     """
-    fundi scaffold --use-config {{.File}}
+    fundi generate scaffold --use-config {{.File}}
     """
     Then I must get an exit code 0
     When I execute the cli command
@@ -106,7 +106,7 @@ Feature: Add empty files to an existing project directory structure
     Given I have "a bad fundi file"
     When I execute the cli command
     """
-    fundi scaffold --use-config {{.File}}
+    fundi generate scaffold --use-config {{.File}}
     """
     Then I must get an exit code 1
     When I execute the cli command
@@ -119,7 +119,7 @@ Feature: Add empty files to an existing project directory structure
     Given I have "a bad fundi file"
     When I execute the cli command
     """
-    fundi scaffold --use-config {{.File}}
+    fundi generate scaffold --use-config {{.File}}
     """
     Then I must get an exit code 1
     When I execute the cli command
