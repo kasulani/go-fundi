@@ -13,10 +13,10 @@ TEXT_INVERSE=\e[7m
 BUILD_DIR ?= $(CURDIR)/build
 BINARY_CLI=fundi
 BINARY_CLI_SRC=$(CURDIR)/cmd/fundi
-BDD_TEST=$(CURDIR)/pkg/fundi
+BDD_TEST=$(CURDIR)/internal/fundi
 
 GO_LINKER_FLAGS=-ldflags="-s -w"
-SRC_DIRS=pkg
+SRC_DIRS=internal
 
 # Db migration tool
 BINARY_MIGRATE_TOOL=/bin/migrate

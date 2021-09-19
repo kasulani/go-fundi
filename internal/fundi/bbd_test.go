@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/cucumber/godog"
-	"github.com/kasulani/go-fundi/pkg/behaviour"
+	"github.com/kasulani/go-fundi/internal/behaviour"
 )
 
 func TestBehaviour(t *testing.T) {

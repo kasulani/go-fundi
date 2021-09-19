@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/kasulani/go-fundi/pkg/fundi"
+	"github.com/kasulani/go-fundi/internal/fundi"
 )
 
 func main() {

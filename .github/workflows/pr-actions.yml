@@ -31,8 +31,8 @@ jobs:
           go mod download
           go get -v -u github.com/cucumber/godog/cmd/godog@v0.12.0
       - name: Run unit tests
-        run: go test -v -race -tags unit $(for d in pkg; do echo ./$d/...; done)
+        run: go test -v -race -tags unit $(for d in internal; do echo ./$d/...; done)
       - name: Run behaviour tests
         run: |
           go install -v ./cmd/fundi
-          go test -v -race -tags behaviour ./pkg/fundi
+          go test -v -race -tags behaviour ./internal/fundi

@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/kasulani/go-fundi/pkg/generate"
+	"github.com/kasulani/go-fundi/internal/generate"
 )
 
 type (
