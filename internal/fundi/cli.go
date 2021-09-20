@@ -325,22 +325,22 @@ func (tp *templateParser) ParseTemplates(
 
 	for name, tpl := range data {
 		buffer.Reset()
-		if tpl.Name == "" {
+		if tpl.Name() == "" {
 			parsedFiles[name] = buffer.Bytes()
 			continue
 		}
 
-		spin.message(fmt.Sprintf("Parsing templates: reading file %s...", tpl.Name))
-		contents, err := afero.ReadFile(tp.fs, templatePath+string(os.PathSeparator)+tpl.Name)
+		spin.message(fmt.Sprintf("Parsing templates: reading file %s...", tpl.Name()))
+		contents, err := afero.ReadFile(tp.fs, templatePath+string(os.PathSeparator)+tpl.Name())
 		if err != nil {
 			spin.message("Parsing templates: failed ✗").asFailure()
 
 			return nil, err
 		}
 
-		spin.message(fmt.Sprintf("Parsing templates: processing %s...", tpl.Name))
+		spin.message(fmt.Sprintf("Parsing templates: processing %s...", tpl.Name()))
 		tmpl := template.Must(template.New("tmpl").Parse(string(contents)))
-		if err := tmpl.Execute(buffer, tpl.Values); err != nil {
+		if err := tmpl.Execute(buffer, tpl.Values()); err != nil {
 			spin.message("Parsing templates: failed ✗").asFailure()
 
 			return nil, err

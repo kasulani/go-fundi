@@ -44,8 +44,8 @@ type (
 
 	// TemplateFile represents a template file.
 	TemplateFile struct {
-		Name   string
-		Values map[string]interface{}
+		name   string
+		values map[string]interface{}
 	}
 
 	// Templates represents the template configs in the metadata section of the .fundi.yaml file.
@@ -94,6 +94,24 @@ func (f *FundiFile) ProjectStructure() []interface{} {
 // TemplatesPath returns the location where the templates are to be found.
 func (f *FundiFile) TemplatesPath() string {
 	return f.metadata.templates.path
+}
+
+// NewTemplateFile returns a new instance of TemplateFile.
+func NewTemplateFile(name string, values map[string]interface{}) *TemplateFile {
+	return &TemplateFile{
+		name:   name,
+		values: values,
+	}
+}
+
+// Name returns the template file name.
+func (tf *TemplateFile) Name() string {
+	return tf.name
+}
+
+// Values returns the template values.
+func (tf *TemplateFile) Values() map[string]interface{} {
+	return tf.values
 }
 
 // CreateStructure creates a directory structure.
@@ -245,18 +263,15 @@ func getFilesAndTemplates(structure []interface{}) (map[string]*TemplateFile, er
 					files[parent+string(os.PathSeparator)+name] = tpl
 				}
 			} else if isFile(cast.ToStringMap(item)) {
-				files[cast.ToString(dict["file"])] = templateFile(cast.ToStringMap(dict["template"]))
+				tpl := cast.ToStringMap(dict["template"])
+				files[cast.ToString(dict["file"])] = NewTemplateFile(
+					cast.ToString(tpl["name"]),
+					cast.ToStringMap(tpl["values"]),
+				)
 			}
 		default:
 			return nil, errors.Errorf("unexpected kind: %s", kind)
 		}
 	}
 	return files, nil
-}
-
-func templateFile(tpl map[string]interface{}) *TemplateFile {
-	return &TemplateFile{
-		Name:   cast.ToString(tpl["name"]),
-		Values: cast.ToStringMap(tpl["values"]),
-	}
 }

@@ -220,24 +220,15 @@ func TestGetFilesAndTemplates(t *testing.T) {
 	}{
 		"has valid structure": {
 			want: map[string]*TemplateFile{
-				"funditest/docker-compose.yml": {
-					Name:   "",
-					Values: map[string]interface{}{},
-				},
-				"funditest/README.md": {
-					Name:   "",
-					Values: map[string]interface{}{},
-				},
-				"funditest/docs/index.html": {
-					Name:   "",
-					Values: map[string]interface{}{},
-				},
-				"funditest/pkg/app/doc.go": {
-					Name: "doc.go.tmpl",
-					Values: map[string]interface{}{
+				"funditest/docker-compose.yml": NewTemplateFile("", map[string]interface{}{}),
+				"funditest/README.md":          NewTemplateFile("", map[string]interface{}{}),
+				"funditest/docs/index.html":    NewTemplateFile("", map[string]interface{}{}),
+				"funditest/pkg/app/doc.go": NewTemplateFile(
+					"doc.go.tmpl",
+					map[string]interface{}{
 						"package": "app",
 					},
-				},
+				),
 			},
 			hasError: false,
 			reader:   FundiFileReaderFunc(reader(t)),
