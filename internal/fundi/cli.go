@@ -40,15 +40,15 @@ type (
 	}
 
 	// rootCommand of the cli application.
-	rootCommand     Command
-	scaffoldCommand Command
-	generateCommand Command
-	filesCommand    Command
+	rootCommand       Command
+	scaffoldCommand   Command
+	generateCommand   Command
+	filesCommand      Command
+	initialiseCommand Command
 
 	configFile struct {
 		Version  int `yaml:"version"`
 		Metadata struct {
-			Name      string `yaml:"name"`
 			Path      string `yaml:"path"`
 			Templates struct {
 				Path string `yaml:"path"`
@@ -93,6 +93,7 @@ func provideCliCommands() di.Option {
 		di.Provide(newFilesCommand),
 		di.Provide(newScaffoldCommand),
 		di.Provide(newGenerateCommand, di.As(new(Cmd))),
+		di.Provide(newInitialiseCommand, di.As(new(Cmd))),
 	)
 }
 
@@ -206,7 +207,6 @@ func (gc *generateCommand) AddTo(root *rootCommand) {
 func (file *configFile) asFundiFile() *generate.FundiFile {
 	ff := new(generate.FundiFile)
 
-	ff.Metadata.Name = file.Metadata.Name
 	ff.Metadata.Path = file.Metadata.Path
 	ff.Metadata.Templates.Path = file.Metadata.Templates.Path
 	ff.Structure = file.Structure
@@ -357,4 +357,64 @@ func (tp *templateParser) ParseTemplates(
 	spin.message("Parsing templates: finished ✓").asSuccessful()
 
 	return parsedFiles, nil
+}
+
+func newInitialiseCommand(
+	ctx context.Context,
+	reader generate.FundiFileReader,
+	directoryStructure *generate.DirectoryStructure,
+	filesSkipTemplates *generate.FilesSkipTemplates,
+	filesFromTemplates *generate.FilesFromTemplates,
+) *initialiseCommand {
+	init := &initialiseCommand{
+		Command: &cobra.Command{
+			Use:     "initialise",
+			Aliases: []string{"initialize", "init"},
+			Short:   "initialise a new project",
+			Long:    `use this command to scaffold and generate files for your project`,
+			Run: func(cmd *cobra.Command, args []string) {
+				if err := directoryStructure.UseCase(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
+				if err != nil {
+					println(err)
+				}
+
+				switch skipTemplates {
+				case true:
+					if err := filesSkipTemplates.UseCase(); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+				case false:
+					if err := filesFromTemplates.UseCase(); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+				}
+
+				os.Exit(0)
+			},
+		},
+		ctx: ctx,
+	}
+
+	init.Flags().Bool("skip-templates", false, "generate empty files")
+
+	init.PersistentFlags().StringVarP(
+		&reader.(*ymlConfig).Flag.file,
+		"use-config",
+		"c",
+		"./.fundi.yaml",
+		"path to fundi config file",
+	)
+
+	return init
+}
+
+func (init *initialiseCommand) AddTo(root *rootCommand) {
+	root.AddCommand(init.Command)
 }

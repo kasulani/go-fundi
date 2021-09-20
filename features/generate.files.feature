@@ -1,4 +1,4 @@
-Feature: Add empty files to an existing project directory structure
+Feature: Add files to an existing project directory structure
 
   Scenario: Generate files skip templates exits with code 0
     Given I have "a good fundi file"
