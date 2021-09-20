@@ -1,9 +1,7 @@
 version: 1
 metadata:
-  name: funditest
-  path: "."
+  path: "." # project path or root directory location.
   templates:
-    archive: local
     path: "./testdata"
 structure:
   - folder: funditest # this is the project root directory.

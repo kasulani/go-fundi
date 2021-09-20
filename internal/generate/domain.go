@@ -12,7 +12,6 @@ type (
 	// FundiFile is a model of the .fundi.yaml file.
 	FundiFile struct {
 		Metadata struct {
-			Name      string
 			Path      string
 			Templates Templates
 		}

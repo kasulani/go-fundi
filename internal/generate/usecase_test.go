@@ -14,7 +14,6 @@ import (
 type (
 	testConfigFile struct {
 		Metadata struct {
-			Name      string `yaml:"name"`
 			Path      string `yaml:"path"`
 			Templates struct {
 				Path string `yaml:"path"`
@@ -126,7 +125,6 @@ func reader(t *testing.T) func() (*FundiFile, error) {
 func (ts *testConfigFile) toFundiFile() *FundiFile {
 	ff := new(FundiFile)
 
-	ff.Metadata.Name = ts.Metadata.Name
 	ff.Metadata.Path = ts.Metadata.Path
 	ff.Metadata.Templates.Path = ts.Metadata.Templates.Path
 	ff.Structure = ts.Structure
