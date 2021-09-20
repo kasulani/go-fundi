@@ -204,16 +204,6 @@ func (gc *generateCommand) AddTo(root *rootCommand) {
 	root.AddCommand(gc.Command)
 }
 
-func (file *configFile) asFundiFile() *generate.FundiFile {
-	ff := new(generate.FundiFile)
-
-	ff.Metadata.Path = file.Metadata.Path
-	ff.Metadata.Templates.Path = file.Metadata.Templates.Path
-	ff.Structure = file.Structure
-
-	return ff
-}
-
 func newYmlConfig(fs afero.Fs, tracker *spinner) *ymlConfig {
 	return &ymlConfig{
 		fs:      fs,
@@ -243,7 +233,11 @@ func (reader *ymlConfig) Read() (*generate.FundiFile, error) {
 	}
 	spin.message("Unmarshalling file data: finished ✓").asSuccessful()
 
-	return reader.file.asFundiFile(), err
+	return generate.NewFundiFile(
+		reader.file.Metadata.Path,
+		generate.NewTemplates(reader.file.Metadata.Templates.Path),
+		reader.file.Structure,
+	), err
 }
 
 func newStructureCreator(fs afero.Fs, tracker *spinner) *structureCreator {

@@ -11,11 +11,11 @@ import (
 type (
 	// FundiFile is a model of the .fundi.yaml file.
 	FundiFile struct {
-		Metadata struct {
-			Path      string
-			Templates Templates
+		metadata struct {
+			path      string
+			templates *Templates
 		}
-		Structure []interface{}
+		structure []interface{}
 	}
 
 	// StructureCreator interface defines the CreateStructure method.
@@ -50,7 +50,7 @@ type (
 
 	// Templates represents the template configs in the metadata section of the .fundi.yaml file.
 	Templates struct {
-		Path string
+		path string
 	}
 
 	// TemplateParser interface defines ParseTemplates method.
@@ -61,6 +61,40 @@ type (
 	// TemplateParserFunc is an adapter type to allow use of ordinary functions as directory TemplateParser.
 	TemplateParserFunc func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error)
 )
+
+// NewTemplates returns a new instance of Templates.
+func NewTemplates(path string) *Templates {
+	return &Templates{path: path}
+}
+
+// NewFundiFile returns a new instance of FundiFile.
+func NewFundiFile(path string, templates *Templates, structure []interface{}) *FundiFile {
+	return &FundiFile{
+		metadata: struct {
+			path      string
+			templates *Templates
+		}{
+			path:      path,
+			templates: templates,
+		},
+		structure: structure,
+	}
+}
+
+// ProjectPath returns the location where the project root dir will be created.
+func (f *FundiFile) ProjectPath() string {
+	return f.metadata.path
+}
+
+// ProjectStructure returns the directory structure specified in the fundi file.
+func (f *FundiFile) ProjectStructure() []interface{} {
+	return f.structure
+}
+
+// TemplatesPath returns the location where the templates are to be found.
+func (f *FundiFile) TemplatesPath() string {
+	return f.metadata.templates.path
+}
 
 // CreateStructure creates a directory structure.
 func (fn StructureCreatorFunc) CreateStructure(folders []string) error {

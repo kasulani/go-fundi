@@ -68,7 +68,7 @@ func TestProjectStructure_UseCase(t *testing.T) {
 			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
 				t.Helper()
 				cfg := new(FundiFile)
-				cfg.Structure = []interface{}{"cmd", "pkg"}
+				cfg.structure = []interface{}{"cmd", "pkg"}
 
 				return cfg, nil
 			}),
@@ -118,18 +118,12 @@ func reader(t *testing.T) func() (*FundiFile, error) {
 			return nil, err
 		}
 
-		return file.toFundiFile(), nil
+		return NewFundiFile(
+			file.Metadata.Path,
+			NewTemplates(file.Metadata.Templates.Path),
+			file.Structure,
+		), nil
 	}
-}
-
-func (ts *testConfigFile) toFundiFile() *FundiFile {
-	ff := new(FundiFile)
-
-	ff.Metadata.Path = ts.Metadata.Path
-	ff.Metadata.Templates.Path = ts.Metadata.Templates.Path
-	ff.Structure = ts.Structure
-
-	return ff
 }
 
 func (hc *mockHierarchyCreator) assertHierarchy(dirs []string) {
@@ -188,7 +182,7 @@ func TestEmptyFiles_UseCase(t *testing.T) {
 			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
 				t.Helper()
 				cfg := new(FundiFile)
-				cfg.Structure = []interface{}{"docker-compose.yml", "README.md"}
+				cfg.structure = []interface{}{"docker-compose.yml", "README.md"}
 
 				return cfg, nil
 			}),
@@ -292,7 +286,7 @@ func TestNewFilesFromTemplates(t *testing.T) {
 			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
 				t.Helper()
 				cfg := new(FundiFile)
-				cfg.Structure = []interface{}{"docker-compose.yml", "README.md"}
+				cfg.structure = []interface{}{"docker-compose.yml", "README.md"}
 
 				return cfg, nil
 			}),

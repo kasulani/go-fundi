@@ -74,13 +74,13 @@ func (ps *DirectoryStructure) UseCase() error {
 		return errors.Wrap(err, "failed to read fundi file")
 	}
 
-	directories, err := getAllDirectories(fundiFile.Structure)
+	directories, err := getAllDirectories(fundiFile.ProjectStructure())
 	if err != nil {
 		return errors.Wrap(err, "failed to get directories")
 	}
 
 	if err := ps.structureCreator.CreateStructure(
-		generateHierarchy(fundiFile.Metadata.Path, directories).([]string),
+		generateHierarchy(fundiFile.ProjectPath(), directories).([]string),
 	); err != nil {
 		return errors.Wrap(err, "failed to create directory hierarchy")
 	}
@@ -95,14 +95,14 @@ func (ef *FilesSkipTemplates) UseCase() error {
 		return errors.Wrap(err, "failed to read fundi file")
 	}
 
-	files, err := getFilesSkipTemplates(fundiFile.Structure)
+	files, err := getFilesSkipTemplates(fundiFile.ProjectStructure())
 	if err != nil {
 		return errors.Wrap(err, "failed to get files")
 	}
 
 	if err := ef.fCreator.CreateFiles(
 		generateEmptyFiles(
-			generateHierarchy(fundiFile.Metadata.Path, files).([]string),
+			generateHierarchy(fundiFile.ProjectPath(), files).([]string),
 		),
 	); err != nil {
 		return errors.Wrap(err, "failed to create empty files")
@@ -118,18 +118,18 @@ func (f *FilesFromTemplates) UseCase() error {
 		return errors.Wrap(err, "failed to read fundi file")
 	}
 
-	filesAndTemplates, err := getFilesAndTemplates(fundiFile.Structure)
+	filesAndTemplates, err := getFilesAndTemplates(fundiFile.ProjectStructure())
 	if err != nil {
 		return errors.Wrap(err, "failed to get files and their templates")
 	}
 
-	parsedFiles, err := f.parser.ParseTemplates(filesAndTemplates, fundiFile.Metadata.Templates.Path)
+	parsedFiles, err := f.parser.ParseTemplates(filesAndTemplates, fundiFile.TemplatesPath())
 	if err != nil {
 		return errors.Wrap(err, "failed to parse templates")
 	}
 
 	if err := f.fCreator.CreateFiles(
-		generateHierarchy(fundiFile.Metadata.Path, parsedFiles).(map[string][]byte),
+		generateHierarchy(fundiFile.ProjectPath(), parsedFiles).(map[string][]byte),
 	); err != nil {
 		return errors.Wrap(err, "failed to create files")
 	}
