@@ -40,15 +40,15 @@ type (
 	}
 
 	// rootCommand of the cli application.
-	rootCommand     Command
-	scaffoldCommand Command
-	generateCommand Command
-	filesCommand    Command
+	rootCommand       Command
+	scaffoldCommand   Command
+	generateCommand   Command
+	filesCommand      Command
+	initialiseCommand Command
 
 	configFile struct {
 		Version  int `yaml:"version"`
 		Metadata struct {
-			Name      string `yaml:"name"`
 			Path      string `yaml:"path"`
 			Templates struct {
 				Path string `yaml:"path"`
@@ -93,6 +93,7 @@ func provideCliCommands() di.Option {
 		di.Provide(newFilesCommand),
 		di.Provide(newScaffoldCommand),
 		di.Provide(newGenerateCommand, di.As(new(Cmd))),
+		di.Provide(newInitialiseCommand, di.As(new(Cmd))),
 	)
 }
 
@@ -203,17 +204,6 @@ func (gc *generateCommand) AddTo(root *rootCommand) {
 	root.AddCommand(gc.Command)
 }
 
-func (file *configFile) asFundiFile() *generate.FundiFile {
-	ff := new(generate.FundiFile)
-
-	ff.Metadata.Name = file.Metadata.Name
-	ff.Metadata.Path = file.Metadata.Path
-	ff.Metadata.Templates.Path = file.Metadata.Templates.Path
-	ff.Structure = file.Structure
-
-	return ff
-}
-
 func newYmlConfig(fs afero.Fs, tracker *spinner) *ymlConfig {
 	return &ymlConfig{
 		fs:      fs,
@@ -243,7 +233,11 @@ func (reader *ymlConfig) Read() (*generate.FundiFile, error) {
 	}
 	spin.message("Unmarshalling file data: finished ✓").asSuccessful()
 
-	return reader.file.asFundiFile(), err
+	return generate.NewFundiFile(
+		reader.file.Metadata.Path,
+		generate.NewTemplates(reader.file.Metadata.Templates.Path),
+		reader.file.Structure,
+	), err
 }
 
 func newStructureCreator(fs afero.Fs, tracker *spinner) *structureCreator {
@@ -331,22 +325,22 @@ func (tp *templateParser) ParseTemplates(
 
 	for name, tpl := range data {
 		buffer.Reset()
-		if tpl.Name == "" {
+		if tpl.Name() == "" {
 			parsedFiles[name] = buffer.Bytes()
 			continue
 		}
 
-		spin.message(fmt.Sprintf("Parsing templates: reading file %s...", tpl.Name))
-		contents, err := afero.ReadFile(tp.fs, templatePath+string(os.PathSeparator)+tpl.Name)
+		spin.message(fmt.Sprintf("Parsing templates: reading file %s...", tpl.Name()))
+		contents, err := afero.ReadFile(tp.fs, templatePath+string(os.PathSeparator)+tpl.Name())
 		if err != nil {
 			spin.message("Parsing templates: failed ✗").asFailure()
 
 			return nil, err
 		}
 
-		spin.message(fmt.Sprintf("Parsing templates: processing %s...", tpl.Name))
+		spin.message(fmt.Sprintf("Parsing templates: processing %s...", tpl.Name()))
 		tmpl := template.Must(template.New("tmpl").Parse(string(contents)))
-		if err := tmpl.Execute(buffer, tpl.Values); err != nil {
+		if err := tmpl.Execute(buffer, tpl.Values()); err != nil {
 			spin.message("Parsing templates: failed ✗").asFailure()
 
 			return nil, err
@@ -357,4 +351,64 @@ func (tp *templateParser) ParseTemplates(
 	spin.message("Parsing templates: finished ✓").asSuccessful()
 
 	return parsedFiles, nil
+}
+
+func newInitialiseCommand(
+	ctx context.Context,
+	reader generate.FundiFileReader,
+	directoryStructure *generate.DirectoryStructure,
+	filesSkipTemplates *generate.FilesSkipTemplates,
+	filesFromTemplates *generate.FilesFromTemplates,
+) *initialiseCommand {
+	init := &initialiseCommand{
+		Command: &cobra.Command{
+			Use:     "initialise",
+			Aliases: []string{"initialize", "init"},
+			Short:   "initialise a new project",
+			Long:    `use this command to scaffold and generate files for your project`,
+			Run: func(cmd *cobra.Command, args []string) {
+				if err := directoryStructure.UseCase(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
+				if err != nil {
+					println(err)
+				}
+
+				switch skipTemplates {
+				case true:
+					if err := filesSkipTemplates.UseCase(); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+				case false:
+					if err := filesFromTemplates.UseCase(); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+				}
+
+				os.Exit(0)
+			},
+		},
+		ctx: ctx,
+	}
+
+	init.Flags().Bool("skip-templates", false, "generate empty files")
+
+	init.PersistentFlags().StringVarP(
+		&reader.(*ymlConfig).Flag.file,
+		"use-config",
+		"c",
+		"./.fundi.yaml",
+		"path to fundi config file",
+	)
+
+	return init
+}
+
+func (init *initialiseCommand) AddTo(root *rootCommand) {
+	root.AddCommand(init.Command)
 }

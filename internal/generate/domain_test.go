@@ -89,7 +89,7 @@ func TestGetAllDirectories(t *testing.T) {
 			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
 				t.Helper()
 				cfg := new(FundiFile)
-				cfg.Structure = []interface{}{"cmd", "pkg"}
+				cfg.structure = []interface{}{"cmd", "pkg"}
 
 				return cfg, nil
 			}),
@@ -105,7 +105,7 @@ func TestGetAllDirectories(t *testing.T) {
 			cfg, err := tc.reader.Read()
 			checkError(t, err)
 
-			actualDirs, err := getAllDirectories(cfg.Structure)
+			actualDirs, err := getAllDirectories(cfg.structure)
 			assert.Equal(t, tc.expectedDirs, actualDirs)
 
 			if tc.hasError {
@@ -151,7 +151,7 @@ func TestGetFilesSkipTemplates(t *testing.T) {
 			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
 				t.Helper()
 				cfg := new(FundiFile)
-				cfg.Structure = []interface{}{"docker-compose.yml", "README.md"}
+				cfg.structure = []interface{}{"docker-compose.yml", "README.md"}
 
 				return cfg, nil
 			}),
@@ -167,7 +167,7 @@ func TestGetFilesSkipTemplates(t *testing.T) {
 			cfg, err := tc.reader.Read()
 			checkError(t, err)
 
-			actualFiles, err := getFilesSkipTemplates(cfg.Structure)
+			actualFiles, err := getFilesSkipTemplates(cfg.structure)
 			assert.Equal(t, tc.expectedFiles, actualFiles)
 
 			if tc.hasError {
@@ -220,24 +220,15 @@ func TestGetFilesAndTemplates(t *testing.T) {
 	}{
 		"has valid structure": {
 			want: map[string]*TemplateFile{
-				"funditest/docker-compose.yml": {
-					Name:   "",
-					Values: map[string]interface{}{},
-				},
-				"funditest/README.md": {
-					Name:   "",
-					Values: map[string]interface{}{},
-				},
-				"funditest/docs/index.html": {
-					Name:   "",
-					Values: map[string]interface{}{},
-				},
-				"funditest/pkg/app/doc.go": {
-					Name: "doc.go.tmpl",
-					Values: map[string]interface{}{
+				"funditest/docker-compose.yml": NewTemplateFile("", map[string]interface{}{}),
+				"funditest/README.md":          NewTemplateFile("", map[string]interface{}{}),
+				"funditest/docs/index.html":    NewTemplateFile("", map[string]interface{}{}),
+				"funditest/pkg/app/doc.go": NewTemplateFile(
+					"doc.go.tmpl",
+					map[string]interface{}{
 						"package": "app",
 					},
-				},
+				),
 			},
 			hasError: false,
 			reader:   FundiFileReaderFunc(reader(t)),
@@ -258,7 +249,7 @@ func TestGetFilesAndTemplates(t *testing.T) {
 			reader: FundiFileReaderFunc(func() (*FundiFile, error) {
 				t.Helper()
 				cfg := new(FundiFile)
-				cfg.Structure = []interface{}{"docker-compose.yml", "README.md"}
+				cfg.structure = []interface{}{"docker-compose.yml", "README.md"}
 
 				return cfg, nil
 			}),
@@ -274,7 +265,7 @@ func TestGetFilesAndTemplates(t *testing.T) {
 			cfg, err := tc.reader.Read()
 			checkError(t, err)
 
-			actual, err := getFilesAndTemplates(cfg.Structure)
+			actual, err := getFilesAndTemplates(cfg.structure)
 			assert.Equal(t, tc.want, actual)
 
 			if tc.hasError {
