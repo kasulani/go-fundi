@@ -319,12 +319,11 @@ func (tp *templateParser) ParseTemplates(
 		return nil, errors.New("template path missing")
 	}
 
-	buffer := new(bytes.Buffer)
 	parsedFiles := make(map[string][]byte)
 	spin := tp.spinner.start("Parsing templates...")
 
 	for name, tpl := range data {
-		buffer.Reset()
+		buffer := new(bytes.Buffer)
 		if tpl.Name() == "" {
 			parsedFiles[name] = buffer.Bytes()
 			continue
@@ -339,7 +338,13 @@ func (tp *templateParser) ParseTemplates(
 		}
 
 		spin.message(fmt.Sprintf("Parsing templates: processing %s...", tpl.Name()))
-		tmpl := template.Must(template.New("tmpl").Parse(string(contents)))
+		tmpl, err := template.New(tpl.Name()).Parse(string(contents))
+		if err != nil {
+			spin.message("Parsing templates: failed ✗").asFailure()
+
+			return nil, err
+		}
+
 		if err := tmpl.Execute(buffer, tpl.Values()); err != nil {
 			spin.message("Parsing templates: failed ✗").asFailure()
 
