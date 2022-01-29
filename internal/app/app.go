@@ -19,38 +19,30 @@ type (
 )
 
 // Container is a dependency injection container.
-func Container(selector string) *di.Container {
+func Container() *di.Container {
 	if os.Getenv("LOG_LEVEL") == "debug" {
 		di.SetTracer(&di.StdTracer{})
 	}
 
-	var c *di.Container
-	var err error
-
-	switch selector {
-	case "cli":
-		c, err = di.New(
-			di.Provide(context.Background),
-			di.Provide(newConfig),
-			di.Provide(afero.NewOsFs),
-			di.Provide(newSpinner),
-			di.Provide(newStructureCreator, di.As(new(generate.StructureCreator))),
-			di.Provide(newFilesCreator, di.As(new(generate.FileCreator))),
-			di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
-			di.Provide(newTemplateParser, di.As(new(generate.TemplateParser))),
-			generate.ProvideUseCases(),
-			provideCLICommands(),
-			di.Invoke(registerSubCommands),
-		)
-	default:
-		log.Fatalf("unknown container selector: %s", selector)
-	}
+	container, err := di.New(
+		di.Provide(context.Background),
+		di.Provide(newConfig),
+		di.Provide(afero.NewOsFs),
+		di.Provide(newSpinner),
+		di.Provide(newStructureCreator, di.As(new(generate.StructureCreator))),
+		di.Provide(newFilesCreator, di.As(new(generate.FileCreator))),
+		di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
+		di.Provide(newTemplateParser, di.As(new(generate.TemplateParser))),
+		generate.ProvideUseCases(),
+		provideCLICommands(),
+		di.Invoke(registerSubCommands),
+	)
 
 	if err != nil {
 		log.Fatalf("failed to create DI container: %q", err)
 	}
 
-	return c
+	return container
 }
 
 // Run is a high level app entry function.

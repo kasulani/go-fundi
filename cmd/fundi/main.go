@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	container := app.Container("cli")
+	container := app.Container()
 
 	if err := container.Invoke(app.Run); err != nil {
 		log.Printf("failed to start application: %q\n", err)
