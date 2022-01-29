@@ -7,6 +7,9 @@ import (
 
 	"github.com/goava/di"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/spf13/afero"
+
+	"github.com/kasulani/go-fundi/internal/generate"
 )
 
 type (
@@ -29,8 +32,15 @@ func Container(selector string) *di.Container {
 		c, err = di.New(
 			di.Provide(context.Background),
 			di.Provide(newConfig),
-			provideCliCommands(),
-			di.Invoke(RegisterCliCommands),
+			di.Provide(afero.NewOsFs),
+			di.Provide(newSpinner),
+			di.Provide(newStructureCreator, di.As(new(generate.StructureCreator))),
+			di.Provide(newFilesCreator, di.As(new(generate.FileCreator))),
+			di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
+			di.Provide(newTemplateParser, di.As(new(generate.TemplateParser))),
+			generate.ProvideUseCases(),
+			provideCLICommands(),
+			di.Invoke(registerSubCommands),
 		)
 	default:
 		log.Fatalf("unknown container selector: %s", selector)
@@ -60,8 +70,8 @@ func newConfig() *config {
 	return cfg
 }
 
-// RegisterCliCommands adds all the sub commands to the root command.
-func RegisterCliCommands(root *rootCommand, commands Commands) {
+// registerSubCommands adds all the sub commands to the root command.
+func registerSubCommands(root *rootCommand, commands subCommands) {
 	for _, command := range commands {
 		command.AddTo(root)
 	}

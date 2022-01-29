@@ -26,13 +26,13 @@ type (
 		ctx context.Context
 	}
 
-	// Cmd interface defines AddTo method.
-	Cmd interface {
+	// SubCommand interface defines AddTo method.
+	SubCommand interface {
 		AddTo(root *rootCommand)
 	}
 
-	// Commands is a slice of Cmd.
-	Commands []Cmd
+	// subCommands is a slice of SubCommand.
+	subCommands []SubCommand
 
 	// spinner type provides a way to track progress of background tasks.
 	spinner struct {
@@ -80,20 +80,13 @@ type (
 	}
 )
 
-func provideCliCommands() di.Option {
+func provideCLICommands() di.Option {
 	return di.Options(
-		di.Provide(afero.NewOsFs),
-		di.Provide(newSpinner),
-		di.Provide(newStructureCreator, di.As(new(generate.StructureCreator))),
-		di.Provide(newFilesCreator, di.As(new(generate.FileCreator))),
-		di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
-		di.Provide(newTemplateParser, di.As(new(generate.TemplateParser))),
-		generate.ProvideUseCases(),
 		di.Provide(newRootCommand),
 		di.Provide(newFilesCommand),
 		di.Provide(newScaffoldCommand),
-		di.Provide(newGenerateCommand, di.As(new(Cmd))),
-		di.Provide(newInitialiseCommand, di.As(new(Cmd))),
+		di.Provide(newGenerateCommand, di.As(new(SubCommand))),
+		di.Provide(newInitialiseCommand, di.As(new(SubCommand))),
 	)
 }
 
@@ -200,6 +193,7 @@ func newGenerateCommand(
 	return genCmd
 }
 
+// AddTo implements SubCommand interface.
 func (gc *generateCommand) AddTo(root *rootCommand) {
 	root.AddCommand(gc.Command)
 }
@@ -414,6 +408,7 @@ func newInitialiseCommand(
 	return init
 }
 
+// AddTo implements SubCommand interface.
 func (init *initialiseCommand) AddTo(root *rootCommand) {
 	root.AddCommand(init.Command)
 }
