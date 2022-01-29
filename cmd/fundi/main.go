@@ -10,7 +10,7 @@ import (
 func main() {
 	container := app.Container("cli")
 
-	if err := container.Invoke(app.StartCLI); err != nil {
+	if err := container.Invoke(app.Run); err != nil {
 		log.Printf("failed to start application: %q\n", err)
 		os.Exit(1)
 	}

@@ -43,8 +43,8 @@ func Container(selector string) *di.Container {
 	return c
 }
 
-// StartCLI is a high level cli entry function.
-func StartCLI(root *rootCommand) error {
+// Run is a high level app entry function.
+func Run(root *rootCommand) error {
 	return root.Execute()
 }
 
