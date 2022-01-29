@@ -4,13 +4,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/kasulani/go-fundi/internal/fundi"
+	"github.com/kasulani/go-fundi/internal/app"
 )
 
 func main() {
-	container := fundi.Container("cli")
+	container := app.Container("cli")
 
-	if err := container.Invoke(fundi.StartCLI); err != nil {
+	if err := container.Invoke(app.StartCLI); err != nil {
 		log.Printf("failed to start application: %q\n", err)
 		os.Exit(1)
 	}
