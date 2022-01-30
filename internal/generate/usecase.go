@@ -1,6 +1,8 @@
 package generate
 
 import (
+	"context"
+
 	"github.com/goava/di"
 	"github.com/pkg/errors"
 )
@@ -8,7 +10,7 @@ import (
 type (
 	// UseCase interface defines the Execute method on a use case.
 	UseCase interface {
-		Execute() error
+		Execute(ctx context.Context) error
 	}
 
 	// DirectoryStructureUseCase type.
@@ -68,7 +70,7 @@ func NewFilesUseCase(reader FundiFileReader, creator FileCreator, parser Templat
 }
 
 // Execute generates an empty directory structure.
-func (ps *DirectoryStructureUseCase) Execute() error {
+func (ps *DirectoryStructureUseCase) Execute(context.Context) error {
 	fundiFile, err := ps.fundiFile.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
@@ -89,7 +91,7 @@ func (ps *DirectoryStructureUseCase) Execute() error {
 }
 
 // Execute adds empty files to an existing directory structure.
-func (ef *EmptyFilesUseCase) Execute() error {
+func (ef *EmptyFilesUseCase) Execute(context.Context) error {
 	fundiFile, err := ef.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
@@ -112,7 +114,7 @@ func (ef *EmptyFilesUseCase) Execute() error {
 }
 
 // Execute generates files from templates.
-func (f *FilesUseCase) Execute() error {
+func (f *FilesUseCase) Execute(context.Context) error {
 	fundiFile, err := f.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")

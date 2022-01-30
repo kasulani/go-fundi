@@ -22,8 +22,6 @@ type (
 	// Command is cli command type.
 	Command struct {
 		*cobra.Command
-
-		ctx context.Context
 	}
 
 	// SubCommand interface defines AddTo method.
@@ -104,9 +102,8 @@ func newRootCommand() *rootCommand {
 }
 
 func newGenerateCommand(
-	ctx context.Context,
 	reader generate.FundiFileReader,
-	filesCmd *filesCommand,
+	files *filesCommand,
 	directoryStructure *directoryStructure,
 	emptyFiles *emptyFiles,
 ) *generateCommand {
@@ -118,11 +115,10 @@ func newGenerateCommand(
 			Short:   "generate project assets",
 			Long:    `generate project assets`,
 		},
-		ctx: ctx,
 	}
 	genCmd.AddCommand(directoryStructure.Command)
 	genCmd.AddCommand(emptyFiles.Command)
-	genCmd.AddCommand(filesCmd.Command)
+	genCmd.AddCommand(files.Command)
 	genCmd.PersistentFlags().StringVarP(
 		&reader.(*ymlConfig).Flag.file,
 		"use-config",
@@ -153,7 +149,7 @@ func newInitialiseCommand(
 			Short:   "initialise a new project",
 			Long:    `use this command to scaffold and generate files for your project`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := directoryStructure.Execute(); err != nil {
+				if err := directoryStructure.Execute(nil); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -165,12 +161,12 @@ func newInitialiseCommand(
 
 				switch skipTemplates {
 				case true:
-					if err := filesSkipTemplates.Execute(); err != nil {
+					if err := filesSkipTemplates.Execute(ctx); err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
 				case false:
-					if err := filesFromTemplates.Execute(); err != nil {
+					if err := filesFromTemplates.Execute(ctx); err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
@@ -179,7 +175,6 @@ func newInitialiseCommand(
 				os.Exit(0)
 			},
 		},
-		ctx: ctx,
 	}
 
 	init.Flags().Bool("skip-templates", false, "generate empty files")
@@ -208,14 +203,13 @@ func newDirectoryStructureCommand(ctx context.Context, usecase *generate.Directo
 			Short:   "generate directory structure",
 			Long:    `use this subcommand to generate a directory structure for your project.`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := usecase.Execute(); err != nil {
+				if err := usecase.Execute(ctx); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
 				os.Exit(0)
 			},
 		},
-		ctx: ctx,
 	}
 
 	return cmd
@@ -229,14 +223,13 @@ func newEmptyFilesCommand(ctx context.Context, usecase *generate.EmptyFilesUseCa
 			Short:   "generate empty files",
 			Long:    `use this subcommand skip reading your template files and generate emtpy files in your project structure`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := usecase.Execute(); err != nil {
+				if err := usecase.Execute(ctx); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
 				os.Exit(0)
 			},
 		},
-		ctx: ctx,
 	}
 }
 
@@ -248,14 +241,13 @@ func newFilesCommand(ctx context.Context, usecase *generate.FilesUseCase) *files
 			Short:   "generate files",
 			Long:    `use this subcommand to generate files for your project based on your templates`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := usecase.Execute(); err != nil {
+				if err := usecase.Execute(ctx); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
 				os.Exit(0)
 			},
 		},
-		ctx: ctx,
 	}
 
 	return cmd
