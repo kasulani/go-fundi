@@ -322,7 +322,7 @@ func TestNewFilesFromTemplates(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			filesFromTemplates := FilesFromTemplates{
+			filesFromTemplates := FilesUseCase{
 				fileReader: tc.reader,
 				fCreator:   tc.fCreator,
 				parser:     tc.parser,

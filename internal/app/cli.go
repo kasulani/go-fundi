@@ -114,7 +114,7 @@ func newGenerateCommand(
 		Command: &cobra.Command{
 			Use:     "generate",
 			Example: "generate files",
-			Aliases: []string{"gene", "gen"},
+			Aliases: []string{"g"},
 			Short:   "generate project assets",
 			Long:    `generate project assets`,
 		},
@@ -144,7 +144,7 @@ func newInitialiseCommand(
 	reader generate.FundiFileReader,
 	directoryStructure *generate.DirectoryStructureUseCase,
 	filesSkipTemplates *generate.EmptyFilesUseCase,
-	filesFromTemplates *generate.FilesFromTemplates,
+	filesFromTemplates *generate.FilesUseCase,
 ) *initialiseCommand {
 	init := &initialiseCommand{
 		Command: &cobra.Command{
@@ -200,16 +200,13 @@ func (init *initialiseCommand) AddTo(root *rootCommand) {
 	root.AddCommand(init.Command)
 }
 
-func newDirectoryStructureCommand(
-	ctx context.Context,
-	usecase *generate.DirectoryStructureUseCase,
-) *directoryStructure {
+func newDirectoryStructureCommand(ctx context.Context, usecase *generate.DirectoryStructureUseCase) *directoryStructure {
 	cmd := &directoryStructure{
 		Command: &cobra.Command{
 			Use:     "directory-structure",
 			Aliases: []string{"ds"},
 			Short:   "generate directory structure",
-			Long:    `use this command to generate a directory structure for your project.`,
+			Long:    `use this subcommand to generate a directory structure for your project.`,
 			Run: func(cmd *cobra.Command, args []string) {
 				if err := usecase.Execute(); err != nil {
 					fmt.Println(err)
@@ -224,10 +221,7 @@ func newDirectoryStructureCommand(
 	return cmd
 }
 
-func newEmptyFilesCommand(
-	ctx context.Context,
-	usecase *generate.EmptyFilesUseCase,
-) *emptyFiles {
+func newEmptyFilesCommand(ctx context.Context, usecase *generate.EmptyFilesUseCase) *emptyFiles {
 	return &emptyFiles{
 		Command: &cobra.Command{
 			Use:     "empty-files",
@@ -246,41 +240,23 @@ func newEmptyFilesCommand(
 	}
 }
 
-func newFilesCommand(
-	ctx context.Context,
-	filesSkipTemplates *generate.EmptyFilesUseCase,
-	filesFromTemplates *generate.FilesFromTemplates) *filesCommand {
+func newFilesCommand(ctx context.Context, usecase *generate.FilesUseCase) *filesCommand {
 	cmd := &filesCommand{
 		Command: &cobra.Command{
 			Use:     "files",
-			Aliases: []string{"file", "fil"},
-			Short:   "add generated files to the project directory structure",
-			Long:    `use this command to add generated files to the project directory as specified in the .fundi.yml file`,
+			Aliases: []string{"f"},
+			Short:   "generate files",
+			Long:    `use this subcommand to generate files for your project based on your templates`,
 			Run: func(cmd *cobra.Command, args []string) {
-				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
-				if err != nil {
-					println(err)
-				}
-
-				switch skipTemplates {
-				case true:
-					if err := filesSkipTemplates.Execute(); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
-				case false:
-					if err := filesFromTemplates.Execute(); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
+				if err := usecase.Execute(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
 				}
 				os.Exit(0)
 			},
 		},
 		ctx: ctx,
 	}
-
-	cmd.Flags().Bool("skip-templates", false, "generate empty files")
 
 	return cmd
 }

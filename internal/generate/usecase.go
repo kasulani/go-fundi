@@ -11,7 +11,7 @@ type (
 		Execute() error
 	}
 
-	// DirectoryStructureUseCase use case type.
+	// DirectoryStructureUseCase type.
 	DirectoryStructureUseCase struct {
 		fundiFile        FundiFileReader
 		structureCreator StructureCreator
@@ -23,8 +23,8 @@ type (
 		fCreator   FileCreator
 	}
 
-	// FilesFromTemplates use case type.
-	FilesFromTemplates struct {
+	// FilesUseCase type.
+	FilesUseCase struct {
 		fileReader FundiFileReader
 		fCreator   FileCreator
 		parser     TemplateParser
@@ -36,11 +36,11 @@ func ProvideUseCases() di.Option {
 	return di.Options(
 		di.Provide(NewDirectoryStructureUseCase),
 		di.Provide(NewEmptyFilesUseCase),
-		di.Provide(NewFilesFromTemplates),
+		di.Provide(NewFilesUseCase),
 	)
 }
 
-// NewDirectoryStructureUseCase returns an instance of DirectoryStructureUseCase use case.
+// NewDirectoryStructureUseCase returns an instance of DirectoryStructureUseCase.
 func NewDirectoryStructureUseCase(
 	reader FundiFileReader,
 	creator StructureCreator) *DirectoryStructureUseCase {
@@ -50,7 +50,7 @@ func NewDirectoryStructureUseCase(
 	}
 }
 
-// NewEmptyFilesUseCase returns an instance of EmptyFilesUseCase use case.
+// NewEmptyFilesUseCase returns an instance of EmptyFilesUseCase.
 func NewEmptyFilesUseCase(reader FundiFileReader, creator FileCreator) *EmptyFilesUseCase {
 	return &EmptyFilesUseCase{
 		fileReader: reader,
@@ -58,9 +58,9 @@ func NewEmptyFilesUseCase(reader FundiFileReader, creator FileCreator) *EmptyFil
 	}
 }
 
-// NewFilesFromTemplates returns an instance of FilesFromTemplates use case.
-func NewFilesFromTemplates(reader FundiFileReader, creator FileCreator, parser TemplateParser) *FilesFromTemplates {
-	return &FilesFromTemplates{
+// NewFilesUseCase returns an instance of FilesUseCase.
+func NewFilesUseCase(reader FundiFileReader, creator FileCreator, parser TemplateParser) *FilesUseCase {
+	return &FilesUseCase{
 		fileReader: reader,
 		fCreator:   creator,
 		parser:     parser,
@@ -112,7 +112,7 @@ func (ef *EmptyFilesUseCase) Execute() error {
 }
 
 // Execute generates files from templates.
-func (f *FilesFromTemplates) Execute() error {
+func (f *FilesUseCase) Execute() error {
 	fundiFile, err := f.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
