@@ -205,8 +205,8 @@ func TestEmptyFiles_UseCase(t *testing.T) {
 			t.Parallel()
 
 			skipTemplates := EmptyFilesUseCase{
-				fileReader: tc.reader,
-				fCreator:   tc.fCreator,
+				fileReader:  tc.reader,
+				fileCreator: tc.fCreator,
 			}
 
 			err := skipTemplates.Execute(context.Background())
@@ -324,9 +324,9 @@ func TestNewFilesFromTemplates(t *testing.T) {
 			t.Parallel()
 
 			filesFromTemplates := FilesUseCase{
-				fileReader: tc.reader,
-				fCreator:   tc.fCreator,
-				parser:     tc.parser,
+				fileReader:  tc.reader,
+				fileCreator: tc.fCreator,
+				parser:      tc.parser,
 			}
 
 			err := filesFromTemplates.Execute(context.Background())
@@ -336,6 +336,92 @@ func TestNewFilesFromTemplates(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				tc.fCreator.(*mockFileCreator).assertCreatedFiles(tc.want)
+			}
+		})
+	}
+}
+
+func TestInitialiseUseCase(t *testing.T) {
+	tests := map[string]struct {
+		skipTemplates    bool
+		fileReader       FundiFileReader
+		fileCreator      FileCreator
+		parser           TemplateParser
+		structureCreator StructureCreator
+		expectedError    error
+	}{
+		"returns no error when initialisation is successful ": {
+			skipTemplates: true,
+			fileReader:    FundiFileReaderFunc(reader(t)),
+			structureCreator: StructureCreatorFunc(func(folders []string) error {
+				return nil
+			}),
+			fileCreator: FileCreatorFunc(func(files map[string][]byte) error {
+				return nil
+			}),
+		},
+		"returns an error when creating the directory structure fails": {
+			fileReader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				return &FundiFile{}, nil
+			}),
+			structureCreator: StructureCreatorFunc(func(folders []string) error {
+				return errors.New("failed to create directory structure")
+			}),
+			expectedError: errors.New(
+				"failed to initialise: failed to create directory hierarchy:" +
+					" failed to create directory structure",
+			),
+		},
+		"returns an error when creating empty files fails": {
+			skipTemplates: true,
+			fileReader: FundiFileReaderFunc(func() (*FundiFile, error) {
+				return &FundiFile{}, nil
+			}),
+			structureCreator: StructureCreatorFunc(func(folders []string) error {
+				return nil
+			}),
+			fileCreator: FileCreatorFunc(func(files map[string][]byte) error {
+				return errors.New("failed to create files")
+			}),
+			expectedError: errors.New("failed to create empty files: failed to create files"),
+		},
+		"returns an error when creating files from templates fails": {
+			fileReader: FundiFileReaderFunc(reader(t)),
+			structureCreator: StructureCreatorFunc(func(folders []string) error {
+				return nil
+			}),
+			fileCreator: FileCreatorFunc(func(files map[string][]byte) error {
+				return nil
+			}),
+			parser: TemplateParserFunc(
+				func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error) {
+					return nil, errors.New("file error")
+				},
+			),
+			expectedError: errors.New("failed to parse templates: file error"),
+		},
+	}
+
+	for name, test := range tests {
+		testcase := test
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			usecase := NewInitialiseUseCase(
+				NewDirectoryStructureUseCase(testcase.fileReader, testcase.structureCreator),
+				NewEmptyFilesUseCase(testcase.fileReader, testcase.fileCreator),
+				NewFilesUseCase(testcase.fileReader, testcase.fileCreator, testcase.parser),
+			)
+
+			err := usecase.WithSkipTemplates(testcase.skipTemplates).Execute(context.Background())
+
+			switch testcase.expectedError != nil {
+			case true:
+				assert.Error(t, err)
+				assert.EqualError(t, err, testcase.expectedError.Error())
+			case false:
+				assert.NoError(t, err)
 			}
 		})
 	}

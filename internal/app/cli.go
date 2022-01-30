@@ -138,38 +138,23 @@ func (gc *generateCommand) AddTo(root *rootCommand) {
 func newInitialiseCommand(
 	ctx context.Context,
 	reader generate.FundiFileReader,
-	directoryStructure *generate.DirectoryStructureUseCase,
-	filesSkipTemplates *generate.EmptyFilesUseCase,
-	filesFromTemplates *generate.FilesUseCase,
+	usecase *generate.InitialiseUseCase,
 ) *initialiseCommand {
 	init := &initialiseCommand{
 		Command: &cobra.Command{
 			Use:     "initialise",
-			Aliases: []string{"initialize", "init"},
+			Aliases: []string{"init"},
 			Short:   "initialise a new project",
 			Long:    `use this command to scaffold and generate files for your project`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := directoryStructure.Execute(nil); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-
-				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
+				skip, err := cmd.Flags().GetBool("skip-templates")
 				if err != nil {
 					println(err)
 				}
 
-				switch skipTemplates {
-				case true:
-					if err := filesSkipTemplates.Execute(ctx); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
-				case false:
-					if err := filesFromTemplates.Execute(ctx); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
+				if err := usecase.WithSkipTemplates(skip).Execute(ctx); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
 				}
 
 				os.Exit(0)
@@ -195,7 +180,10 @@ func (init *initialiseCommand) AddTo(root *rootCommand) {
 	root.AddCommand(init.Command)
 }
 
-func newDirectoryStructureCommand(ctx context.Context, usecase *generate.DirectoryStructureUseCase) *directoryStructure {
+func newDirectoryStructureCommand(
+	ctx context.Context,
+	usecase *generate.DirectoryStructureUseCase,
+) *directoryStructure {
 	cmd := &directoryStructure{
 		Command: &cobra.Command{
 			Use:     "directory-structure",
