@@ -38,12 +38,12 @@ type (
 	}
 
 	// rootCommand of the cli application.
-	rootCommand        Command
-	initialiseCommand  Command
-	generateCommand    Command
-	directoryStructure Command
-	filesCommand       Command
-	emptyFiles         Command
+	rootCommand               Command
+	initialiseCommand         Command
+	generateCommand           Command
+	directoryStructureCommand Command
+	filesCommand              Command
+	emptyFilesCommand         Command
 
 	configFile struct {
 		Version  int `yaml:"version"`
@@ -104,8 +104,8 @@ func newRootCommand() *rootCommand {
 func newGenerateCommand(
 	reader generate.FundiFileReader,
 	files *filesCommand,
-	directoryStructure *directoryStructure,
-	emptyFiles *emptyFiles,
+	directoryStructure *directoryStructureCommand,
+	emptyFiles *emptyFilesCommand,
 ) *generateCommand {
 	genCmd := &generateCommand{
 		Command: &cobra.Command{
@@ -183,8 +183,8 @@ func (init *initialiseCommand) AddTo(root *rootCommand) {
 func newDirectoryStructureCommand(
 	ctx context.Context,
 	usecase *generate.DirectoryStructureUseCase,
-) *directoryStructure {
-	cmd := &directoryStructure{
+) *directoryStructureCommand {
+	cmd := &directoryStructureCommand{
 		Command: &cobra.Command{
 			Use:     "directory-structure",
 			Aliases: []string{"ds"},
@@ -203,8 +203,8 @@ func newDirectoryStructureCommand(
 	return cmd
 }
 
-func newEmptyFilesCommand(ctx context.Context, usecase *generate.EmptyFilesUseCase) *emptyFiles {
-	return &emptyFiles{
+func newEmptyFilesCommand(ctx context.Context, usecase *generate.EmptyFilesUseCase) *emptyFilesCommand {
+	return &emptyFilesCommand{
 		Command: &cobra.Command{
 			Use:     "empty-files",
 			Aliases: []string{"es"},
