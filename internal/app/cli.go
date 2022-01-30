@@ -40,11 +40,11 @@ type (
 	}
 
 	// rootCommand of the cli application.
-	rootCommand       Command
-	scaffoldCommand   Command
-	generateCommand   Command
-	filesCommand      Command
-	initialiseCommand Command
+	rootCommand        Command
+	initialiseCommand  Command
+	generateCommand    Command
+	directoryStructure Command
+	filesCommand       Command
 
 	configFile struct {
 		Version  int `yaml:"version"`
@@ -84,7 +84,7 @@ func provideCLICommands() di.Option {
 	return di.Options(
 		di.Provide(newRootCommand),
 		di.Provide(newFilesCommand),
-		di.Provide(newScaffoldCommand),
+		di.Provide(newDirectoryStructureCommand),
 		di.Provide(newGenerateCommand, di.As(new(SubCommand))),
 		di.Provide(newInitialiseCommand, di.As(new(SubCommand))),
 	)
@@ -101,18 +101,18 @@ func newRootCommand() *rootCommand {
 	}
 }
 
-func newScaffoldCommand(
+func newDirectoryStructureCommand(
 	ctx context.Context,
-	directoryStructure *generate.DirectoryStructure,
-) *scaffoldCommand {
-	cmd := &scaffoldCommand{
+	usecase *generate.DirectoryStructure,
+) *directoryStructure {
+	cmd := &directoryStructure{
 		Command: &cobra.Command{
-			Use:     "scaffold",
-			Aliases: []string{"scaf", "sca"},
-			Short:   "scaffold a new project directory structure only",
-			Long:    `use this command to generate a directory structure for a new project.`,
+			Use:     "directory-structure",
+			Aliases: []string{"ds"},
+			Short:   "generate directory structure",
+			Long:    `use this command to generate a directory structure for your project.`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := directoryStructure.Execute(); err != nil {
+				if err := usecase.Execute(); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -168,7 +168,7 @@ func newGenerateCommand(
 	ctx context.Context,
 	reader generate.FundiFileReader,
 	filesCmd *filesCommand,
-	scaffoldCmd *scaffoldCommand,
+	scaffoldCmd *directoryStructure,
 ) *generateCommand {
 	genCmd := &generateCommand{
 		Command: &cobra.Command{

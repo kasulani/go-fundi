@@ -34,14 +34,14 @@ type (
 // ProvideUseCases returns a DI container option with use case types.
 func ProvideUseCases() di.Option {
 	return di.Options(
-		di.Provide(NewDirectoryStructure),
+		di.Provide(NewDirectoryStructureUseCase),
 		di.Provide(NewFilesSkipTemplates),
 		di.Provide(NewFilesFromTemplates),
 	)
 }
 
-// NewDirectoryStructure returns an instance of DirectoryStructure use case.
-func NewDirectoryStructure(
+// NewDirectoryStructureUseCase returns an instance of DirectoryStructure use case.
+func NewDirectoryStructureUseCase(
 	reader FundiFileReader,
 	creator StructureCreator) *DirectoryStructure {
 	return &DirectoryStructure{
