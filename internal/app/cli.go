@@ -45,6 +45,7 @@ type (
 	generateCommand    Command
 	directoryStructure Command
 	filesCommand       Command
+	emptyFiles         Command
 
 	configFile struct {
 		Version  int `yaml:"version"`
@@ -85,6 +86,7 @@ func provideCLICommands() di.Option {
 		di.Provide(newRootCommand),
 		di.Provide(newFilesCommand),
 		di.Provide(newDirectoryStructureCommand),
+		di.Provide(newEmptyFilesCommand),
 		di.Provide(newGenerateCommand, di.As(new(SubCommand))),
 		di.Provide(newInitialiseCommand, di.As(new(SubCommand))),
 	)
@@ -101,9 +103,106 @@ func newRootCommand() *rootCommand {
 	}
 }
 
+func newGenerateCommand(
+	ctx context.Context,
+	reader generate.FundiFileReader,
+	filesCmd *filesCommand,
+	directoryStructure *directoryStructure,
+	emptyFiles *emptyFiles,
+) *generateCommand {
+	genCmd := &generateCommand{
+		Command: &cobra.Command{
+			Use:     "generate",
+			Example: "generate files",
+			Aliases: []string{"gene", "gen"},
+			Short:   "generate project assets",
+			Long:    `generate project assets`,
+		},
+		ctx: ctx,
+	}
+	genCmd.AddCommand(directoryStructure.Command)
+	genCmd.AddCommand(emptyFiles.Command)
+	genCmd.AddCommand(filesCmd.Command)
+	genCmd.PersistentFlags().StringVarP(
+		&reader.(*ymlConfig).Flag.file,
+		"use-config",
+		"c",
+		"./.fundi.yaml",
+		"path to fundi config file",
+	)
+
+	return genCmd
+}
+
+// AddTo implements SubCommand interface.
+func (gc *generateCommand) AddTo(root *rootCommand) {
+	root.AddCommand(gc.Command)
+}
+
+func newInitialiseCommand(
+	ctx context.Context,
+	reader generate.FundiFileReader,
+	directoryStructure *generate.DirectoryStructureUseCase,
+	filesSkipTemplates *generate.EmptyFilesUseCase,
+	filesFromTemplates *generate.FilesFromTemplates,
+) *initialiseCommand {
+	init := &initialiseCommand{
+		Command: &cobra.Command{
+			Use:     "initialise",
+			Aliases: []string{"initialize", "init"},
+			Short:   "initialise a new project",
+			Long:    `use this command to scaffold and generate files for your project`,
+			Run: func(cmd *cobra.Command, args []string) {
+				if err := directoryStructure.Execute(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
+				if err != nil {
+					println(err)
+				}
+
+				switch skipTemplates {
+				case true:
+					if err := filesSkipTemplates.Execute(); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+				case false:
+					if err := filesFromTemplates.Execute(); err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+				}
+
+				os.Exit(0)
+			},
+		},
+		ctx: ctx,
+	}
+
+	init.Flags().Bool("skip-templates", false, "generate empty files")
+
+	init.PersistentFlags().StringVarP(
+		&reader.(*ymlConfig).Flag.file,
+		"use-config",
+		"c",
+		"./.fundi.yaml",
+		"path to fundi config file",
+	)
+
+	return init
+}
+
+// AddTo implements SubCommand interface.
+func (init *initialiseCommand) AddTo(root *rootCommand) {
+	root.AddCommand(init.Command)
+}
+
 func newDirectoryStructureCommand(
 	ctx context.Context,
-	usecase *generate.DirectoryStructure,
+	usecase *generate.DirectoryStructureUseCase,
 ) *directoryStructure {
 	cmd := &directoryStructure{
 		Command: &cobra.Command{
@@ -125,9 +224,31 @@ func newDirectoryStructureCommand(
 	return cmd
 }
 
+func newEmptyFilesCommand(
+	ctx context.Context,
+	usecase *generate.EmptyFilesUseCase,
+) *emptyFiles {
+	return &emptyFiles{
+		Command: &cobra.Command{
+			Use:     "empty-files",
+			Aliases: []string{"es"},
+			Short:   "generate empty files",
+			Long:    `use this subcommand skip reading your template files and generate emtpy files in your project structure`,
+			Run: func(cmd *cobra.Command, args []string) {
+				if err := usecase.Execute(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				os.Exit(0)
+			},
+		},
+		ctx: ctx,
+	}
+}
+
 func newFilesCommand(
 	ctx context.Context,
-	filesSkipTemplates *generate.FilesSkipTemplates,
+	filesSkipTemplates *generate.EmptyFilesUseCase,
 	filesFromTemplates *generate.FilesFromTemplates) *filesCommand {
 	cmd := &filesCommand{
 		Command: &cobra.Command{
@@ -162,40 +283,6 @@ func newFilesCommand(
 	cmd.Flags().Bool("skip-templates", false, "generate empty files")
 
 	return cmd
-}
-
-func newGenerateCommand(
-	ctx context.Context,
-	reader generate.FundiFileReader,
-	filesCmd *filesCommand,
-	scaffoldCmd *directoryStructure,
-) *generateCommand {
-	genCmd := &generateCommand{
-		Command: &cobra.Command{
-			Use:     "generate",
-			Example: "generate files",
-			Aliases: []string{"gene", "gen"},
-			Short:   "generate project assets",
-			Long:    `generate project assets`,
-		},
-		ctx: ctx,
-	}
-	genCmd.AddCommand(scaffoldCmd.Command)
-	genCmd.AddCommand(filesCmd.Command)
-	genCmd.PersistentFlags().StringVarP(
-		&reader.(*ymlConfig).Flag.file,
-		"use-config",
-		"c",
-		"./.fundi.yaml",
-		"path to fundi config file",
-	)
-
-	return genCmd
-}
-
-// AddTo implements SubCommand interface.
-func (gc *generateCommand) AddTo(root *rootCommand) {
-	root.AddCommand(gc.Command)
 }
 
 func newYmlConfig(fs afero.Fs, tracker *spinner) *ymlConfig {
@@ -350,65 +437,4 @@ func (tp *templateParser) ParseTemplates(
 	spin.message("Parsing templates: finished ✓").asSuccessful()
 
 	return parsedFiles, nil
-}
-
-func newInitialiseCommand(
-	ctx context.Context,
-	reader generate.FundiFileReader,
-	directoryStructure *generate.DirectoryStructure,
-	filesSkipTemplates *generate.FilesSkipTemplates,
-	filesFromTemplates *generate.FilesFromTemplates,
-) *initialiseCommand {
-	init := &initialiseCommand{
-		Command: &cobra.Command{
-			Use:     "initialise",
-			Aliases: []string{"initialize", "init"},
-			Short:   "initialise a new project",
-			Long:    `use this command to scaffold and generate files for your project`,
-			Run: func(cmd *cobra.Command, args []string) {
-				if err := directoryStructure.Execute(); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-
-				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
-				if err != nil {
-					println(err)
-				}
-
-				switch skipTemplates {
-				case true:
-					if err := filesSkipTemplates.Execute(); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
-				case false:
-					if err := filesFromTemplates.Execute(); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
-				}
-
-				os.Exit(0)
-			},
-		},
-		ctx: ctx,
-	}
-
-	init.Flags().Bool("skip-templates", false, "generate empty files")
-
-	init.PersistentFlags().StringVarP(
-		&reader.(*ymlConfig).Flag.file,
-		"use-config",
-		"c",
-		"./.fundi.yaml",
-		"path to fundi config file",
-	)
-
-	return init
-}
-
-// AddTo implements SubCommand interface.
-func (init *initialiseCommand) AddTo(root *rootCommand) {
-	root.AddCommand(init.Command)
 }

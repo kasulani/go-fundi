@@ -11,14 +11,14 @@ type (
 		Execute() error
 	}
 
-	// DirectoryStructure use case type.
-	DirectoryStructure struct {
+	// DirectoryStructureUseCase use case type.
+	DirectoryStructureUseCase struct {
 		fundiFile        FundiFileReader
 		structureCreator StructureCreator
 	}
 
-	// FilesSkipTemplates use case type.
-	FilesSkipTemplates struct {
+	// EmptyFilesUseCase type.
+	EmptyFilesUseCase struct {
 		fileReader FundiFileReader
 		fCreator   FileCreator
 	}
@@ -35,24 +35,24 @@ type (
 func ProvideUseCases() di.Option {
 	return di.Options(
 		di.Provide(NewDirectoryStructureUseCase),
-		di.Provide(NewFilesSkipTemplates),
+		di.Provide(NewEmptyFilesUseCase),
 		di.Provide(NewFilesFromTemplates),
 	)
 }
 
-// NewDirectoryStructureUseCase returns an instance of DirectoryStructure use case.
+// NewDirectoryStructureUseCase returns an instance of DirectoryStructureUseCase use case.
 func NewDirectoryStructureUseCase(
 	reader FundiFileReader,
-	creator StructureCreator) *DirectoryStructure {
-	return &DirectoryStructure{
+	creator StructureCreator) *DirectoryStructureUseCase {
+	return &DirectoryStructureUseCase{
 		fundiFile:        reader,
 		structureCreator: creator,
 	}
 }
 
-// NewFilesSkipTemplates returns an instance of FilesSkipTemplates use case.
-func NewFilesSkipTemplates(reader FundiFileReader, creator FileCreator) *FilesSkipTemplates {
-	return &FilesSkipTemplates{
+// NewEmptyFilesUseCase returns an instance of EmptyFilesUseCase use case.
+func NewEmptyFilesUseCase(reader FundiFileReader, creator FileCreator) *EmptyFilesUseCase {
+	return &EmptyFilesUseCase{
 		fileReader: reader,
 		fCreator:   creator,
 	}
@@ -68,7 +68,7 @@ func NewFilesFromTemplates(reader FundiFileReader, creator FileCreator, parser T
 }
 
 // Execute generates an empty directory structure.
-func (ps *DirectoryStructure) Execute() error {
+func (ps *DirectoryStructureUseCase) Execute() error {
 	fundiFile, err := ps.fundiFile.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
@@ -89,7 +89,7 @@ func (ps *DirectoryStructure) Execute() error {
 }
 
 // Execute adds empty files to an existing directory structure.
-func (ef *FilesSkipTemplates) Execute() error {
+func (ef *EmptyFilesUseCase) Execute() error {
 	fundiFile, err := ef.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")

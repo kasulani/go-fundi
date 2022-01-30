@@ -89,7 +89,7 @@ func TestProjectStructure_UseCase(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			generateStructure := DirectoryStructure{
+			generateStructure := DirectoryStructureUseCase{
 				fundiFile:        tc.reader,
 				structureCreator: tc.hCreator,
 			}
@@ -203,7 +203,7 @@ func TestEmptyFiles_UseCase(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			skipTemplates := FilesSkipTemplates{
+			skipTemplates := EmptyFilesUseCase{
 				fileReader: tc.reader,
 				fCreator:   tc.fCreator,
 			}
