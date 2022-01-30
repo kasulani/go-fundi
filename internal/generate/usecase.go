@@ -6,9 +6,9 @@ import (
 )
 
 type (
-	// Generator interface defines the UseCase method.
-	Generator interface {
-		UseCase() error
+	// UseCase interface defines the Execute method on a use case.
+	UseCase interface {
+		Execute() error
 	}
 
 	// DirectoryStructure use case type.
@@ -67,8 +67,8 @@ func NewFilesFromTemplates(reader FundiFileReader, creator FileCreator, parser T
 	}
 }
 
-// UseCase to generate an empty directory structure.
-func (ps *DirectoryStructure) UseCase() error {
+// Execute generates an empty directory structure.
+func (ps *DirectoryStructure) Execute() error {
 	fundiFile, err := ps.fundiFile.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
@@ -88,8 +88,8 @@ func (ps *DirectoryStructure) UseCase() error {
 	return nil
 }
 
-// UseCase to add empty files to an existing directory structure.
-func (ef *FilesSkipTemplates) UseCase() error {
+// Execute adds empty files to an existing directory structure.
+func (ef *FilesSkipTemplates) Execute() error {
 	fundiFile, err := ef.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
@@ -111,8 +111,8 @@ func (ef *FilesSkipTemplates) UseCase() error {
 	return nil
 }
 
-// UseCase to generate files from templates.
-func (f *FilesFromTemplates) UseCase() error {
+// Execute generates files from templates.
+func (f *FilesFromTemplates) Execute() error {
 	fundiFile, err := f.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")

@@ -112,7 +112,7 @@ func newScaffoldCommand(
 			Short:   "scaffold a new project directory structure only",
 			Long:    `use this command to generate a directory structure for a new project.`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := directoryStructure.UseCase(); err != nil {
+				if err := directoryStructure.Execute(); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -143,12 +143,12 @@ func newFilesCommand(
 
 				switch skipTemplates {
 				case true:
-					if err := filesSkipTemplates.UseCase(); err != nil {
+					if err := filesSkipTemplates.Execute(); err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
 				case false:
-					if err := filesFromTemplates.UseCase(); err != nil {
+					if err := filesFromTemplates.Execute(); err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
@@ -366,7 +366,7 @@ func newInitialiseCommand(
 			Short:   "initialise a new project",
 			Long:    `use this command to scaffold and generate files for your project`,
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := directoryStructure.UseCase(); err != nil {
+				if err := directoryStructure.Execute(); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -378,12 +378,12 @@ func newInitialiseCommand(
 
 				switch skipTemplates {
 				case true:
-					if err := filesSkipTemplates.UseCase(); err != nil {
+					if err := filesSkipTemplates.Execute(); err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
 				case false:
-					if err := filesFromTemplates.UseCase(); err != nil {
+					if err := filesFromTemplates.Execute(); err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}

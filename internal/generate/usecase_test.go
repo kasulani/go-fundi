@@ -94,7 +94,7 @@ func TestProjectStructure_UseCase(t *testing.T) {
 				structureCreator: tc.hCreator,
 			}
 
-			err := generateStructure.UseCase()
+			err := generateStructure.Execute()
 			if tc.hasError {
 				assert.Error(t, err)
 			} else {
@@ -208,7 +208,7 @@ func TestEmptyFiles_UseCase(t *testing.T) {
 				fCreator:   tc.fCreator,
 			}
 
-			err := skipTemplates.UseCase()
+			err := skipTemplates.Execute()
 
 			if tc.hasError {
 				assert.Error(t, err)
@@ -328,7 +328,7 @@ func TestNewFilesFromTemplates(t *testing.T) {
 				parser:     tc.parser,
 			}
 
-			err := filesFromTemplates.UseCase()
+			err := filesFromTemplates.Execute()
 
 			if tc.hasError {
 				assert.Error(t, err)
