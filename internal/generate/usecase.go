@@ -8,11 +8,6 @@ import (
 )
 
 type (
-	// UseCase interface defines the Execute method on a use case.
-	UseCase interface {
-		Execute(ctx context.Context) error
-	}
-
 	// DirectoryStructureUseCase type.
 	DirectoryStructureUseCase struct {
 		fundiFile        FundiFileReader
