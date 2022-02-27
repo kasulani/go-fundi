@@ -1,4 +1,4 @@
-package fundi
+package app
 
 import (
 	"bytes"
@@ -22,17 +22,15 @@ type (
 	// Command is cli command type.
 	Command struct {
 		*cobra.Command
-
-		ctx context.Context
 	}
 
-	// Cmd interface defines AddTo method.
-	Cmd interface {
+	// SubCommand interface defines AddTo method.
+	SubCommand interface {
 		AddTo(root *rootCommand)
 	}
 
-	// Commands is a slice of Cmd.
-	Commands []Cmd
+	// subCommands is a slice of SubCommand.
+	subCommands []SubCommand
 
 	// spinner type provides a way to track progress of background tasks.
 	spinner struct {
@@ -40,11 +38,12 @@ type (
 	}
 
 	// rootCommand of the cli application.
-	rootCommand       Command
-	scaffoldCommand   Command
-	generateCommand   Command
-	filesCommand      Command
-	initialiseCommand Command
+	rootCommand               Command
+	initialiseCommand         Command
+	generateCommand           Command
+	directoryStructureCommand Command
+	filesCommand              Command
+	emptyFilesCommand         Command
 
 	configFile struct {
 		Version  int `yaml:"version"`
@@ -80,20 +79,14 @@ type (
 	}
 )
 
-func provideCliCommands() di.Option {
+func provideCLICommands() di.Option {
 	return di.Options(
-		di.Provide(afero.NewOsFs),
-		di.Provide(newSpinner),
-		di.Provide(newStructureCreator, di.As(new(generate.StructureCreator))),
-		di.Provide(newFilesCreator, di.As(new(generate.FileCreator))),
-		di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
-		di.Provide(newTemplateParser, di.As(new(generate.TemplateParser))),
-		generate.ProvideUseCases(),
 		di.Provide(newRootCommand),
 		di.Provide(newFilesCommand),
-		di.Provide(newScaffoldCommand),
-		di.Provide(newGenerateCommand, di.As(new(Cmd))),
-		di.Provide(newInitialiseCommand, di.As(new(Cmd))),
+		di.Provide(newDirectoryStructureCommand),
+		di.Provide(newEmptyFilesCommand),
+		di.Provide(newGenerateCommand, di.As(new(SubCommand))),
+		di.Provide(newInitialiseCommand, di.As(new(SubCommand))),
 	)
 }
 
@@ -108,87 +101,24 @@ func newRootCommand() *rootCommand {
 	}
 }
 
-func newScaffoldCommand(
-	ctx context.Context,
-	directoryStructure *generate.DirectoryStructure,
-) *scaffoldCommand {
-	cmd := &scaffoldCommand{
-		Command: &cobra.Command{
-			Use:     "scaffold",
-			Aliases: []string{"scaf", "sca"},
-			Short:   "scaffold a new project directory structure only",
-			Long:    `use this command to generate a directory structure for a new project.`,
-			Run: func(cmd *cobra.Command, args []string) {
-				if err := directoryStructure.UseCase(); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				os.Exit(0)
-			},
-		},
-		ctx: ctx,
-	}
-
-	return cmd
-}
-
-func newFilesCommand(
-	ctx context.Context,
-	filesSkipTemplates *generate.FilesSkipTemplates,
-	filesFromTemplates *generate.FilesFromTemplates) *filesCommand {
-	cmd := &filesCommand{
-		Command: &cobra.Command{
-			Use:     "files",
-			Aliases: []string{"file", "fil"},
-			Short:   "add generated files to the project directory structure",
-			Long:    `use this command to add generated files to the project directory as specified in the .fundi.yml file`,
-			Run: func(cmd *cobra.Command, args []string) {
-				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
-				if err != nil {
-					println(err)
-				}
-
-				switch skipTemplates {
-				case true:
-					if err := filesSkipTemplates.UseCase(); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
-				case false:
-					if err := filesFromTemplates.UseCase(); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
-				}
-				os.Exit(0)
-			},
-		},
-		ctx: ctx,
-	}
-
-	cmd.Flags().Bool("skip-templates", false, "generate empty files")
-
-	return cmd
-}
-
 func newGenerateCommand(
-	ctx context.Context,
 	reader generate.FundiFileReader,
-	filesCmd *filesCommand,
-	scaffoldCmd *scaffoldCommand,
+	files *filesCommand,
+	directoryStructure *directoryStructureCommand,
+	emptyFiles *emptyFilesCommand,
 ) *generateCommand {
 	genCmd := &generateCommand{
 		Command: &cobra.Command{
 			Use:     "generate",
 			Example: "generate files",
-			Aliases: []string{"gene", "gen"},
+			Aliases: []string{"g"},
 			Short:   "generate project assets",
 			Long:    `generate project assets`,
 		},
-		ctx: ctx,
 	}
-	genCmd.AddCommand(scaffoldCmd.Command)
-	genCmd.AddCommand(filesCmd.Command)
+	genCmd.AddCommand(directoryStructure.Command)
+	genCmd.AddCommand(emptyFiles.Command)
+	genCmd.AddCommand(files.Command)
 	genCmd.PersistentFlags().StringVarP(
 		&reader.(*ymlConfig).Flag.file,
 		"use-config",
@@ -200,8 +130,115 @@ func newGenerateCommand(
 	return genCmd
 }
 
+// AddTo implements SubCommand interface.
 func (gc *generateCommand) AddTo(root *rootCommand) {
 	root.AddCommand(gc.Command)
+}
+
+func newInitialiseCommand(
+	ctx context.Context,
+	reader generate.FundiFileReader,
+	usecase *generate.InitialiseUseCase,
+) *initialiseCommand {
+	init := &initialiseCommand{
+		Command: &cobra.Command{
+			Use:     "initialise",
+			Aliases: []string{"init"},
+			Short:   "initialise a new project",
+			Long:    `use this command to scaffold and generate files for your project`,
+			Run: func(cmd *cobra.Command, args []string) {
+				skip, err := cmd.Flags().GetBool("skip-templates")
+				if err != nil {
+					println(err)
+				}
+
+				if err := usecase.WithSkipTemplates(skip).Execute(ctx); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				os.Exit(0)
+			},
+		},
+	}
+
+	init.Flags().Bool("skip-templates", false, "generate empty files")
+
+	init.PersistentFlags().StringVarP(
+		&reader.(*ymlConfig).Flag.file,
+		"use-config",
+		"c",
+		"./.fundi.yaml",
+		"path to fundi config file",
+	)
+
+	return init
+}
+
+// AddTo implements SubCommand interface.
+func (init *initialiseCommand) AddTo(root *rootCommand) {
+	root.AddCommand(init.Command)
+}
+
+func newDirectoryStructureCommand(
+	ctx context.Context,
+	usecase *generate.DirectoryStructureUseCase,
+) *directoryStructureCommand {
+	cmd := &directoryStructureCommand{
+		Command: &cobra.Command{
+			Use:     "directory-structure",
+			Aliases: []string{"ds"},
+			Short:   "generate directory structure",
+			Long:    `use this subcommand to generate a directory structure for your project.`,
+			Run: func(cmd *cobra.Command, args []string) {
+				if err := usecase.Execute(ctx); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				os.Exit(0)
+			},
+		},
+	}
+
+	return cmd
+}
+
+func newEmptyFilesCommand(ctx context.Context, usecase *generate.EmptyFilesUseCase) *emptyFilesCommand {
+	return &emptyFilesCommand{
+		Command: &cobra.Command{
+			Use:     "empty-files",
+			Aliases: []string{"es"},
+			Short:   "generate empty files",
+			Long:    `use this subcommand skip reading your template files and generate emtpy files in your project structure`,
+			Run: func(cmd *cobra.Command, args []string) {
+				if err := usecase.Execute(ctx); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				os.Exit(0)
+			},
+		},
+	}
+}
+
+func newFilesCommand(ctx context.Context, usecase *generate.FilesUseCase) *filesCommand {
+	cmd := &filesCommand{
+		Command: &cobra.Command{
+			Use:     "files",
+			Aliases: []string{"f"},
+			Short:   "generate files",
+			Long:    `use this subcommand to generate files for your project based on your templates`,
+			Run: func(cmd *cobra.Command, args []string) {
+				if err := usecase.Execute(ctx); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				os.Exit(0)
+			},
+		},
+	}
+
+	return cmd
 }
 
 func newYmlConfig(fs afero.Fs, tracker *spinner) *ymlConfig {
@@ -356,64 +393,4 @@ func (tp *templateParser) ParseTemplates(
 	spin.message("Parsing templates: finished ✓").asSuccessful()
 
 	return parsedFiles, nil
-}
-
-func newInitialiseCommand(
-	ctx context.Context,
-	reader generate.FundiFileReader,
-	directoryStructure *generate.DirectoryStructure,
-	filesSkipTemplates *generate.FilesSkipTemplates,
-	filesFromTemplates *generate.FilesFromTemplates,
-) *initialiseCommand {
-	init := &initialiseCommand{
-		Command: &cobra.Command{
-			Use:     "initialise",
-			Aliases: []string{"initialize", "init"},
-			Short:   "initialise a new project",
-			Long:    `use this command to scaffold and generate files for your project`,
-			Run: func(cmd *cobra.Command, args []string) {
-				if err := directoryStructure.UseCase(); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-
-				skipTemplates, err := cmd.Flags().GetBool("skip-templates")
-				if err != nil {
-					println(err)
-				}
-
-				switch skipTemplates {
-				case true:
-					if err := filesSkipTemplates.UseCase(); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
-				case false:
-					if err := filesFromTemplates.UseCase(); err != nil {
-						fmt.Println(err)
-						os.Exit(1)
-					}
-				}
-
-				os.Exit(0)
-			},
-		},
-		ctx: ctx,
-	}
-
-	init.Flags().Bool("skip-templates", false, "generate empty files")
-
-	init.PersistentFlags().StringVarP(
-		&reader.(*ymlConfig).Flag.file,
-		"use-config",
-		"c",
-		"./.fundi.yaml",
-		"path to fundi config file",
-	)
-
-	return init
-}
-
-func (init *initialiseCommand) AddTo(root *rootCommand) {
-	root.AddCommand(init.Command)
 }

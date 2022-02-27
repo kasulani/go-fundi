@@ -1,6 +1,6 @@
 // +build behaviour
 
-package fundi
+package app
 
 import (
 	"os"

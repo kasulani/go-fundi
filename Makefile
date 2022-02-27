@@ -13,7 +13,7 @@ TEXT_INVERSE=\e[7m
 BUILD_DIR ?= $(CURDIR)/build
 BINARY_CLI=fundi
 BINARY_CLI_SRC=$(CURDIR)/cmd/fundi
-BDD_TEST=$(CURDIR)/internal/fundi
+BDD_TEST=$(CURDIR)/internal/app
 
 GO_LINKER_FLAGS=-ldflags="-s -w"
 SRC_DIRS=internal
