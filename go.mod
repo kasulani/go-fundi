@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/cucumber/godog v0.12.2
-	github.com/goava/di v1.11.0
+	github.com/goava/di v1.11.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/onsi/gomega v1.16.0
