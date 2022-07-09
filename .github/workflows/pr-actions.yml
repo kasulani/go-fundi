@@ -35,4 +35,4 @@ jobs:
       - name: Run behaviour tests
         run: |
           go install -v ./cmd/fundi
-          go test -v -race -tags behaviour ./internal/fundi
+          go test -v -race -tags behaviour ./internal/app

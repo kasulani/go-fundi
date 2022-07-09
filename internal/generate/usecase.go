@@ -1,75 +1,94 @@
 package generate
 
 import (
+	"context"
+
 	"github.com/goava/di"
 	"github.com/pkg/errors"
 )
 
 type (
-	// Generator interface defines the UseCase method.
-	Generator interface {
-		UseCase() error
-	}
-
-	// DirectoryStructure use case type.
-	DirectoryStructure struct {
+	// DirectoryStructureUseCase type.
+	DirectoryStructureUseCase struct {
 		fundiFile        FundiFileReader
 		structureCreator StructureCreator
 	}
 
-	// FilesSkipTemplates use case type.
-	FilesSkipTemplates struct {
-		fileReader FundiFileReader
-		fCreator   FileCreator
+	// EmptyFilesUseCase type.
+	EmptyFilesUseCase struct {
+		fileReader  FundiFileReader
+		fileCreator FileCreator
 	}
 
-	// FilesFromTemplates use case type.
-	FilesFromTemplates struct {
-		fileReader FundiFileReader
-		fCreator   FileCreator
-		parser     TemplateParser
+	// FilesUseCase type.
+	FilesUseCase struct {
+		fileReader  FundiFileReader
+		fileCreator FileCreator
+		parser      TemplateParser
+	}
+
+	// InitialiseUseCase type.
+	InitialiseUseCase struct {
+		skipTemplates             bool
+		directoryStructureUseCase *DirectoryStructureUseCase
+		emptyFilesUseCase         *EmptyFilesUseCase
+		filesUseCase              *FilesUseCase
 	}
 )
 
 // ProvideUseCases returns a DI container option with use case types.
 func ProvideUseCases() di.Option {
 	return di.Options(
-		di.Provide(NewDirectoryStructure),
-		di.Provide(NewFilesSkipTemplates),
-		di.Provide(NewFilesFromTemplates),
+		di.Provide(NewDirectoryStructureUseCase),
+		di.Provide(NewEmptyFilesUseCase),
+		di.Provide(NewFilesUseCase),
+		di.Provide(NewInitialiseUseCase),
 	)
 }
 
-// NewDirectoryStructure returns an instance of DirectoryStructure use case.
-func NewDirectoryStructure(
+// NewDirectoryStructureUseCase returns an instance of DirectoryStructureUseCase.
+func NewDirectoryStructureUseCase(
 	reader FundiFileReader,
-	creator StructureCreator) *DirectoryStructure {
-	return &DirectoryStructure{
+	creator StructureCreator) *DirectoryStructureUseCase {
+	return &DirectoryStructureUseCase{
 		fundiFile:        reader,
 		structureCreator: creator,
 	}
 }
 
-// NewFilesSkipTemplates returns an instance of FilesSkipTemplates use case.
-func NewFilesSkipTemplates(reader FundiFileReader, creator FileCreator) *FilesSkipTemplates {
-	return &FilesSkipTemplates{
-		fileReader: reader,
-		fCreator:   creator,
+// NewEmptyFilesUseCase returns an instance of EmptyFilesUseCase.
+func NewEmptyFilesUseCase(reader FundiFileReader, creator FileCreator) *EmptyFilesUseCase {
+	return &EmptyFilesUseCase{
+		fileReader:  reader,
+		fileCreator: creator,
 	}
 }
 
-// NewFilesFromTemplates returns an instance of FilesFromTemplates use case.
-func NewFilesFromTemplates(reader FundiFileReader, creator FileCreator, parser TemplateParser) *FilesFromTemplates {
-	return &FilesFromTemplates{
-		fileReader: reader,
-		fCreator:   creator,
-		parser:     parser,
+// NewFilesUseCase returns an instance of FilesUseCase.
+func NewFilesUseCase(reader FundiFileReader, creator FileCreator, parser TemplateParser) *FilesUseCase {
+	return &FilesUseCase{
+		fileReader:  reader,
+		fileCreator: creator,
+		parser:      parser,
 	}
 }
 
-// UseCase to generate an empty directory structure.
-func (ps *DirectoryStructure) UseCase() error {
-	fundiFile, err := ps.fundiFile.Read()
+// NewInitialiseUseCase returns an instance of InitialiseUseCase.
+func NewInitialiseUseCase(
+	dsUseCase *DirectoryStructureUseCase,
+	efUseCase *EmptyFilesUseCase,
+	fUseCase *FilesUseCase,
+) *InitialiseUseCase {
+	return &InitialiseUseCase{
+		directoryStructureUseCase: dsUseCase,
+		emptyFilesUseCase:         efUseCase,
+		filesUseCase:              fUseCase,
+	}
+}
+
+// Execute generates an empty directory structure.
+func (usecase *DirectoryStructureUseCase) Execute(ctx context.Context) error {
+	fundiFile, err := usecase.fundiFile.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
 	}
@@ -79,7 +98,7 @@ func (ps *DirectoryStructure) UseCase() error {
 		return errors.Wrap(err, "failed to get directories")
 	}
 
-	if err := ps.structureCreator.CreateStructure(
+	if err := usecase.structureCreator.CreateStructure(
 		generateHierarchy(fundiFile.ProjectPath(), directories).([]string),
 	); err != nil {
 		return errors.Wrap(err, "failed to create directory hierarchy")
@@ -88,9 +107,9 @@ func (ps *DirectoryStructure) UseCase() error {
 	return nil
 }
 
-// UseCase to add empty files to an existing directory structure.
-func (ef *FilesSkipTemplates) UseCase() error {
-	fundiFile, err := ef.fileReader.Read()
+// Execute adds empty files to an existing directory structure.
+func (usecase *EmptyFilesUseCase) Execute(ctx context.Context) error {
+	fundiFile, err := usecase.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
 	}
@@ -100,7 +119,7 @@ func (ef *FilesSkipTemplates) UseCase() error {
 		return errors.Wrap(err, "failed to get files")
 	}
 
-	if err := ef.fCreator.CreateFiles(
+	if err := usecase.fileCreator.CreateFiles(
 		generateEmptyFiles(
 			generateHierarchy(fundiFile.ProjectPath(), files).([]string),
 		),
@@ -111,9 +130,9 @@ func (ef *FilesSkipTemplates) UseCase() error {
 	return nil
 }
 
-// UseCase to generate files from templates.
-func (f *FilesFromTemplates) UseCase() error {
-	fundiFile, err := f.fileReader.Read()
+// Execute generates files from templates.
+func (usecase *FilesUseCase) Execute(ctx context.Context) error {
+	fundiFile, err := usecase.fileReader.Read()
 	if err != nil {
 		return errors.Wrap(err, "failed to read fundi file")
 	}
@@ -123,16 +142,36 @@ func (f *FilesFromTemplates) UseCase() error {
 		return errors.Wrap(err, "failed to get files and their templates")
 	}
 
-	parsedFiles, err := f.parser.ParseTemplates(filesAndTemplates, fundiFile.TemplatesPath())
+	parsedFiles, err := usecase.parser.ParseTemplates(filesAndTemplates, fundiFile.TemplatesPath())
 	if err != nil {
 		return errors.Wrap(err, "failed to parse templates")
 	}
 
-	if err := f.fCreator.CreateFiles(
+	if err := usecase.fileCreator.CreateFiles(
 		generateHierarchy(fundiFile.ProjectPath(), parsedFiles).(map[string][]byte),
 	); err != nil {
 		return errors.Wrap(err, "failed to create files")
 	}
 
 	return nil
+}
+
+// WithSkipTemplates sets skipTemplates attribute of InitialiseUseCase type.
+func (usecase *InitialiseUseCase) WithSkipTemplates(skip bool) *InitialiseUseCase {
+	usecase.skipTemplates = skip
+
+	return usecase
+}
+
+// Execute creates a directory structure and generates files.
+func (usecase *InitialiseUseCase) Execute(ctx context.Context) error {
+	if err := usecase.directoryStructureUseCase.Execute(ctx); err != nil {
+		return errors.Wrap(err, "failed to initialise")
+	}
+
+	if usecase.skipTemplates {
+		return usecase.emptyFilesUseCase.Execute(ctx)
+	}
+
+	return usecase.filesUseCase.Execute(ctx)
 }

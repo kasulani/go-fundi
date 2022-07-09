@@ -5,7 +5,7 @@ run:
   skip-dirs:
     - ci
     - docs
-    - docker-file
+    - dockerfiles
     - features
     - migrations
     - templates
@@ -43,10 +43,8 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - bodyclose
     - deadcode
     - depguard
-    - dogsled
     - dupl
     - errcheck
     - gochecknoinits
@@ -56,32 +54,19 @@ linters:
     - gofmt
     - goimports
     - golint
-    - goprintffuncname
     - gosec
     - gosimple
-    - govet
     - ineffassign
     - lll
     - misspell
     - nakedret
-    - nolintlint
-    - rowserrcheck
-    - exportloopref
     - staticcheck
     - stylecheck
-    - typecheck
     - unconvert
     - unparam
     - unused
     - varcheck
-    - whitespace
-    - bodyclose
-    - gocognit
-    - asciicheck
     - prealloc
-    - godox
-    - nestif
-    - godot
 
   fast: false
 
@@ -97,6 +82,3 @@ issues:
     - linters:
         - errcheck
       text: ".Body.Close` is not checked"
-
-# Remind to rebase your branch!
-new-from-rev: origin/master
