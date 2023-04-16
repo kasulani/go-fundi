@@ -54,13 +54,13 @@ deps:
 
 deps-dev:
 	${call print, "Installing CompileDaemon"}
-	${call go, get -v -u github.com/githubnemo/CompileDaemon}
+	${call go, get -v github.com/githubnemo/CompileDaemon}
 
 	${call print, "Installing Linters"}
 	${call go, get -v github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36.0}
 
 	${call print, "Installing Godog"}
-	${call go, get -v -u github.com/cucumber/godog/cmd/godog@v0.11.0}
+	${call go, get -v github.com/cucumber/godog/cmd/godog@v0.11.0}
 
 	${call print, "Installing gitleaks"}
 	@wget https://github.com/zricethezav/gitleaks/releases/download/v4.3.1/gitleaks-linux-amd64 -O $(GOPATH)/bin/gitleaks
