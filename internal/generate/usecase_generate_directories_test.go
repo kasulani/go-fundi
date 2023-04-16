@@ -23,56 +23,10 @@ func TestProjectDirectoryStructureUseCase(t *testing.T) {
 					return errors.New("an-OS-error")
 				},
 			),
-			configFile: NewConfigurationFile(
-				&Metadata{output: ".", templates: "./testdata"},
-				Directories{
-					&Directory{
-						name: "project_root_directory",
-						subDirectories: Directories{
-							&Directory{
-								name:  "cmd",
-								files: Files{&File{name: "main.go", template: "main.go.tmpl"}},
-							},
-							&Directory{
-								name: "internal",
-								subDirectories: Directories{
-									&Directory{
-										name:           "domain",
-										files:          Files{&File{name: "domain.go", template: "domain.go.tmpl"}},
-										subDirectories: nil,
-									},
-								},
-							},
-						},
-					},
-				},
-			),
+			configFile: NewTestConfigurationFile(),
 		},
 		"when the project structure is successfully created, return no error": {
-			configFile: NewConfigurationFile(
-				&Metadata{output: ".", templates: "./testdata"},
-				Directories{
-					&Directory{
-						name: "project_root_directory",
-						subDirectories: Directories{
-							&Directory{
-								name:  "cmd",
-								files: Files{&File{name: "main.go", template: "main.go.tmpl"}},
-							},
-							&Directory{
-								name: "internal",
-								subDirectories: Directories{
-									&Directory{
-										name:           "domain",
-										files:          Files{&File{name: "domain.go", template: "domain.go.tmpl"}},
-										subDirectories: nil,
-									},
-								},
-							},
-						},
-					},
-				},
-			),
+			configFile: NewTestConfigurationFile(),
 			expectedStructure: []string{
 				"./project_root_directory/cmd",
 				"./project_root_directory/internal/domain",
@@ -117,30 +71,7 @@ func TestGetAllDirectoriesInTheConfigFile(t *testing.T) {
 					return nil
 				},
 			),
-			configFile: NewConfigurationFile(
-				&Metadata{output: ".", templates: "./testdata"},
-				Directories{
-					&Directory{
-						name: "project_root_directory",
-						subDirectories: Directories{
-							&Directory{
-								name:  "cmd",
-								files: Files{&File{name: "main.go", template: "main.go.tmpl"}},
-							},
-							&Directory{
-								name: "internal",
-								subDirectories: Directories{
-									&Directory{
-										name:           "domain",
-										files:          Files{&File{name: "domain.go", template: "domain.go.tmpl"}},
-										subDirectories: nil,
-									},
-								},
-							},
-						},
-					},
-				},
-			),
+			configFile: NewTestConfigurationFile(),
 		},
 		"returns an empty list of files": {
 			expectedDirs: make([]string, 0),
