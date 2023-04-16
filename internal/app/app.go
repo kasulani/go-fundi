@@ -34,6 +34,10 @@ func Container() *di.Container {
 		di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
 		di.Provide(newTemplateParser, di.As(new(generate.TemplateParser))),
 		generate.ProvideUseCases(),
+		di.Provide(newFileReader),
+		di.Provide(newDirectoryCreator, di.As(new(generate.DirectoryStructureCreator))),
+		di.Provide(generate.NewProjectDirectoryStructureUseCase),
+		di.Provide(newGenerateDirectoriesCommand, di.As(new(SubCommand))),
 		provideCLICommands(),
 		di.Invoke(registerSubCommands),
 	)
