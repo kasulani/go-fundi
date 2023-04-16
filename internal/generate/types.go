@@ -40,6 +40,10 @@ type (
 	}
 )
 
+func (s *ProjectDirectoryStructure) Directories() []string {
+	return s.directories
+}
+
 func (d *Directory) hasSubDirectories() bool {
 	return d.subDirectories != nil
 }
