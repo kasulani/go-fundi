@@ -6,7 +6,7 @@ require (
 	github.com/cucumber/godog v0.12.5
 	github.com/goava/di v1.11.1
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/onsi/gomega v1.19.0
+	github.com/onsi/gomega v1.27.6
 	github.com/pkg/errors v0.9.1
 	github.com/pterm/pterm v0.12.42
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
