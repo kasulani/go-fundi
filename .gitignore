@@ -4,3 +4,5 @@ coverage*
 build
 *funditest*
 .draft-fundi.yaml
+testdata/.fundi.yaml
+
