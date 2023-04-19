@@ -2,6 +2,7 @@ package behaviour
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -20,6 +21,7 @@ func (specs *TestSpecifications) registerAllSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^I must get an exit code (\d+)$`, specs.iMustGetAnExitCode)
 	sc.Step(`^I must get a command output$`, specs.iMustGetACommandOutput)
 	sc.Step(`^file "([^"]*)" has contents$`, specs.fileHasContents)
+	sc.Step(`^I have the following configuration$`, specs.iHaveTheFollowingConfiguration)
 }
 
 func (specs *TestSpecifications) iHave(input string) error {
@@ -91,6 +93,18 @@ func (specs *TestSpecifications) fileHasContents(filename string, expected *godo
 
 	if !assert.Expect(string(data)).To(assert.BeIdenticalTo(expected.Content)) {
 		return errors.New("actual command output does not match the expected command output")
+	}
+
+	return nil
+}
+
+func (specs *TestSpecifications) iHaveTheFollowingConfiguration(config *godog.DocString) error {
+	data := []byte(config.Content)
+
+	specs.in.File = fmt.Sprintf("%s/testdata/.fundi.yaml", specs.workingDirectory())
+
+	if err := os.WriteFile(specs.in.File, data, 0600); err != nil {
+		return err
 	}
 
 	return nil

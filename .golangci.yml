@@ -78,6 +78,9 @@ issues:
     - path: main.go
       linters:
         - gocyclo
+    - path: internal/generate/mocks.go
+      linters:
+        - unused
     # This rule ignores missing error handling when closing http.Response.Body.
     - linters:
         - errcheck

@@ -95,33 +95,26 @@ directories:
   - name: project_name # root directory of your project
     files:
       - name: README.md
-        template:
-          name: readme.md.tmpl
+        template: readme.md.tmpl
     directories:
       - name: db
         files:
           - name: db.go
-            template:
-              name: db.go.tmpl
+            template: db.go.tmpl
       - name: cmd
         files:
           - name: main.go
-            template:
-              name: main.go.tmpl
+            template: main.go.tmpl
       - name: pkg
         directories:
           - name: api
             files:
               - name: api.go
-                template:
-                  name: api.go.tmpl
+                template: api.go.tmpl
           - name: db
             files:
               - name: db.go
-                template:
-                  name: db.go.tmpl
-                  values:
-                    package: bdd
+                template: db.go.tmpl
 ```
 
 Then run the generate command to create the project directories and files.
