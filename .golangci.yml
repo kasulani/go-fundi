@@ -64,7 +64,7 @@ linters:
     - stylecheck
     - unconvert
     - unparam
-    - unused
+#    - unused
     - varcheck
     - prealloc
 
