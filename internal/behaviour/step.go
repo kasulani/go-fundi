@@ -103,7 +103,7 @@ func (specs *TestSpecifications) iHaveTheFollowingConfiguration(config *godog.Do
 
 	specs.in.File = fmt.Sprintf("%s/testdata/.fundi.yaml", specs.workingDirectory())
 
-	if err := os.WriteFile(specs.in.File, data, 0644); err != nil {
+	if err := os.WriteFile(specs.in.File, data, 0600); err != nil {
 		return err
 	}
 

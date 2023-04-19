@@ -45,7 +45,7 @@ directories:
 
 	for name, testCase := range tests {
 		t.Run(name, func(t *testing.T) {
-			err := afero.WriteFile(fs, fileName, testCase.fileData, 0644)
+			err := afero.WriteFile(fs, fileName, testCase.fileData, 0600)
 			assert.NoError(t, err)
 
 			reader := fileReader{fs: fs}
