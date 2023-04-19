@@ -20,6 +20,7 @@ func (useCase *ProjectDirectoryStructureUseCase) getAllDirectoriesInTheConfigFil
 	for _, directory := range directories {
 		if !directory.hasSubDirectories() {
 			dirs = append(dirs, directory.name)
+			continue
 		}
 
 		subDirectories := useCase.getAllDirectoriesInTheConfigFile(directory.subDirectories)

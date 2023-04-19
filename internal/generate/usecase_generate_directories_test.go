@@ -57,30 +57,19 @@ func TestProjectDirectoryStructureUseCase(t *testing.T) {
 
 func TestGetAllDirectoriesInTheConfigFile(t *testing.T) {
 	tests := map[string]struct {
-		expectedDirs     []string
-		configFile       *ConfigurationFile
-		structureCreator DirectoryStructureCreator
+		expectedDirs []string
+		configFile   *ConfigurationFile
 	}{
 		"returns all files in the configurationFile": {
 			expectedDirs: []string{
 				"project_root_directory/cmd",
 				"project_root_directory/internal/domain",
 			},
-			structureCreator: mockDirectoryStructureCreator(
-				func(_ context.Context, _ *ProjectDirectoryStructure) error {
-					return nil
-				},
-			),
 			configFile: NewTestConfigurationFile(),
 		},
 		"returns an empty list of files": {
 			expectedDirs: make([]string, 0),
-			structureCreator: mockDirectoryStructureCreator(
-				func(_ context.Context, _ *ProjectDirectoryStructure) error {
-					return nil
-				},
-			),
-			configFile: NewConfigurationFile(&Metadata{output: ".", templates: "./testdata"}, Directories{}),
+			configFile:   NewConfigurationFile(&Metadata{output: ".", templates: "./testdata"}, Directories{}),
 		},
 	}
 
@@ -89,7 +78,11 @@ func TestGetAllDirectoriesInTheConfigFile(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			useCase := NewProjectDirectoryStructureUseCase(testCase.structureCreator)
+			useCase := NewProjectDirectoryStructureUseCase(mockDirectoryStructureCreator(
+				func(_ context.Context, _ *ProjectDirectoryStructure) error {
+					return nil
+				},
+			))
 			actualDirs := useCase.getAllDirectoriesInTheConfigFile(testCase.configFile.directories)
 
 			assert.Equal(t, testCase.expectedDirs, actualDirs)

@@ -40,6 +40,7 @@ type (
 	}
 )
 
+// Directories returns a list of directories to be created.
 func (s *ProjectDirectoryStructure) Directories() []string {
 	return s.directories
 }
