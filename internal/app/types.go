@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/pterm/pterm"
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"
 
@@ -40,6 +41,8 @@ type (
 	fileReader struct{ fs afero.Fs }
 
 	directoryCreator struct{ fs afero.Fs }
+
+	filesCreator struct{ fs afero.Fs }
 )
 
 // readYAMLFile returns an instance of yamlFile.
@@ -102,10 +105,44 @@ func (creator *directoryCreator) CreateDirectoryStructure(
 ) error {
 	dirs := structure.Directories()
 
+	bar, err := pterm.DefaultProgressbar.WithTotal(len(dirs)).WithTitle("Generating directories").Start()
+	if err != nil {
+		return err
+	}
+
 	for _, dir := range dirs {
 		if err := creator.fs.MkdirAll(dir, 0755); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to create directory %s", dir)
 		}
+		bar.Increment()
+	}
+
+	_, err = bar.Stop()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (creator *filesCreator) CreateFiles(files map[string][]byte) error {
+	bar, err := pterm.DefaultProgressbar.WithTotal(len(files)).WithTitle("Generating files").Start()
+	if err != nil {
+		return err
+	}
+
+	for name, data := range files {
+		if err := afero.WriteFile(creator.fs, name, data, 0644); err != nil {
+			_, _ = bar.Stop()
+
+			return errors.Wrapf(err, "failed to create file %s", name)
+		}
+		bar.Increment()
+	}
+
+	_, err = bar.Stop()
+	if err != nil {
+		return err
 	}
 
 	return nil
