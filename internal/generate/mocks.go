@@ -2,6 +2,7 @@ package generate
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,11 @@ import (
 type (
 	mockDirectoryStructureCreator     func(ctx context.Context, structure *ProjectDirectoryStructure) error
 	inMemoryDirectoryStructureCreator struct {
+		test       *testing.T
+		fileSystem afero.Fs
+	}
+	mockFileCreator     func(files map[string][]byte) error
+	inMemoryFileCreator struct {
 		test       *testing.T
 		fileSystem afero.Fs
 	}
@@ -52,5 +58,34 @@ func (m *inMemoryDirectoryStructureCreator) assertDirectoryStructureExists(dirs 
 		}
 
 		assert.True(m.test, info.IsDir())
+	}
+}
+
+// CreateFiles is a mock.
+func (m mockFileCreator) CreateFiles(files map[string][]byte) error {
+	return m(files)
+}
+
+func (mf *inMemoryFileCreator) CreateFiles(files map[string][]byte) error {
+	mf.test.Helper()
+
+	for name, data := range files {
+		mf.test.Logf("creating file: %s...", name)
+
+		if err := afero.WriteFile(mf.fileSystem, name, data, 0644); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (mf *inMemoryFileCreator) assertCreatedFiles(filenames []string) {
+	mf.test.Helper()
+
+	for _, name := range filenames {
+		info, err := mf.fileSystem.Stat(name)
+		assert.False(mf.test, info.IsDir())
+		assert.False(mf.test, os.IsNotExist(err))
 	}
 }

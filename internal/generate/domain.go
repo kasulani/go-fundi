@@ -34,11 +34,6 @@ type (
 	// FundiFileReaderFunc is an adapter type to allow use of ordinary functions as fundi file readers.
 	FundiFileReaderFunc func() (*FundiFile, error)
 
-	// FileCreator interface define the CreateFiles method.
-	FileCreator interface {
-		CreateFiles(files map[string][]byte) error
-	}
-
 	// FileCreatorFunc is an adapter type to allow use of ordinary functions as directory FileCreator.
 	FileCreatorFunc func(files map[string][]byte) error
 

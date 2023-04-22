@@ -33,11 +33,9 @@ func NewConfigurationFile(metadata *Metadata, directories Directories) *Configur
 	return &ConfigurationFile{metadata: metadata, directories: directories}
 }
 
-// NewProjectDirectoryStructureUseCase returns an instance of ProjectDirectoryStructureUseCase.
-func NewProjectDirectoryStructureUseCase(
-	structureCreator DirectoryStructureCreator,
-) *ProjectDirectoryStructureUseCase {
-	return &ProjectDirectoryStructureUseCase{structureCreator: structureCreator}
+// NewProjectUseCase returns an instance of ProjectUseCase.
+func NewProjectUseCase(structureCreator DirectoryStructureCreator, fileCreator FileCreator) *ProjectUseCase {
+	return &ProjectUseCase{structureCreator: structureCreator, fileCreator: fileCreator}
 }
 
 // NewTestConfigurationFile returns a test ConfigurationFile you can use in unit tests.
@@ -46,7 +44,8 @@ func NewTestConfigurationFile() *ConfigurationFile {
 		&Metadata{output: ".", templates: "./testdata"},
 		Directories{
 			&Directory{
-				name: "project_root_directory",
+				name:  "project_root_directory",
+				files: Files{&File{name: "README.md", template: "README.md.tmpl"}},
 				subDirectories: Directories{
 					&Directory{
 						name:  "cmd",

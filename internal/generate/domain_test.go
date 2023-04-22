@@ -179,7 +179,7 @@ func TestGetFilesSkipTemplates(t *testing.T) {
 	}
 }
 
-func TestGenerateEmptyFiles(t *testing.T) {
+func TestGenerateEmptyFiles2(t *testing.T) {
 	tests := map[string]struct {
 		paths         []string
 		expectedFiles map[string][]byte
