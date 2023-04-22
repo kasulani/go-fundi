@@ -88,38 +88,30 @@ each directory.
 
 ```yaml
 metadata:
-  output: "." # location where the project files will be created
-  templates: "./templates" # location of the template files
-  values: "./values.yml" # values file
+  output: "."
+  templates: "./templates"
+  values: "./values.yml"
 directories:
-  - name: project_name # root directory of your project
+  - name: funditest
     files:
       - name: README.md
         template: readme.md.tmpl
     directories:
-      - name: db
-        files:
-          - name: db.go
-            template: db.go.tmpl
       - name: cmd
         files:
           - name: main.go
             template: main.go.tmpl
-      - name: pkg
-        directories:
-          - name: api
-            files:
-              - name: api.go
-                template: api.go.tmpl
-          - name: db
-            files:
-              - name: db.go
-                template: db.go.tmpl
+            skip: true
+      - name: internal
+        skip: true
+        files:
+          - name: domain.go
+            template: domain.go.tmpl
 ```
 
 Then run the generate command to create the project directories and files.
 
-**Generate the project directories and files:**
+**Generate the project directories and files using templates:**
 
 ```bash
 $ fundi generate -f /path/to/yaml/file.yaml
@@ -128,13 +120,13 @@ $ fundi generate -f /path/to/yaml/file.yaml
 **Generate only the project directories:**
 
 ```bash
-$ fundi generate-directories -f /path/to/yaml/file.yaml
+$ fundi generate --directories-only -f /path/to/yaml/file.yaml
 ```
 
 **Generate only the project files:**
 
 ```bash
-$ fundi generate-files -f /path/to/yaml/file.yaml
+$ fundi generate --empty-files -f /path/to/yaml/file.yaml
 ```
 
 ## Roadmap

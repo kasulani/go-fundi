@@ -209,7 +209,7 @@ func newEmptyFilesCommand(ctx context.Context, usecase *generate.EmptyFilesUseCa
 			Use:     "empty-files",
 			Aliases: []string{"es"},
 			Short:   "generate empty files",
-			Long:    `use this subcommand skip reading your template files and generate emtpy files in your project structure`,
+			Long:    `use this subcommand skip reading your template files and generate empty files in your project structure`,
 			Run: func(cmd *cobra.Command, args []string) {
 				if err := usecase.Execute(ctx); err != nil {
 					fmt.Println(err)

@@ -36,8 +36,8 @@ func Container() *di.Container {
 		generate.ProvideUseCases(),
 		di.Provide(newFileReader),
 		di.Provide(newDirectoryCreator, di.As(new(generate.DirectoryStructureCreator))),
-		di.Provide(generate.NewProjectDirectoryStructureUseCase),
-		di.Provide(newGenerateDirectoriesCommand, di.As(new(SubCommand))),
+		di.Provide(generate.NewProjectUseCase),
+		di.Provide(newGenerateProjectCommand, di.As(new(SubCommand))),
 		provideCLICommands(),
 		di.Invoke(registerSubCommands),
 	)

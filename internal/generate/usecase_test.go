@@ -27,7 +27,7 @@ type (
 		test       *testing.T
 		fileSystem afero.Fs
 	}
-	mockFileCreator struct {
+	mockFileCreator2 struct {
 		test       *testing.T
 		fileSystem afero.Fs
 	}
@@ -159,7 +159,7 @@ func TestEmptyFiles_UseCase(t *testing.T) {
 	}{
 		"happy path": {
 			reader: FundiFileReaderFunc(reader(t)),
-			fCreator: &mockFileCreator{
+			fCreator: &mockFileCreator2{
 				test:       t,
 				fileSystem: afero.NewMemMapFs(),
 			},
@@ -215,13 +215,13 @@ func TestEmptyFiles_UseCase(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				tc.fCreator.(*mockFileCreator).assertCreatedFiles(tc.expectedFiles)
+				tc.fCreator.(*mockFileCreator2).assertCreatedFiles(tc.expectedFiles)
 			}
 		})
 	}
 }
 
-func (mf *mockFileCreator) CreateFiles(files map[string][]byte) error {
+func (mf *mockFileCreator2) CreateFiles(files map[string][]byte) error {
 	mf.test.Helper()
 
 	for name, data := range files {
@@ -235,7 +235,7 @@ func (mf *mockFileCreator) CreateFiles(files map[string][]byte) error {
 	return nil
 }
 
-func (mf *mockFileCreator) assertCreatedFiles(filenames []string) {
+func (mf *mockFileCreator2) assertCreatedFiles(filenames []string) {
 	mf.test.Helper()
 
 	for _, name := range filenames {
@@ -255,7 +255,7 @@ func TestNewFilesFromTemplates(t *testing.T) {
 	}{
 		"happy path": {
 			reader: FundiFileReaderFunc(reader(t)),
-			fCreator: &mockFileCreator{
+			fCreator: &mockFileCreator2{
 				test:       t,
 				fileSystem: afero.NewMemMapFs(),
 			},
@@ -335,7 +335,7 @@ func TestNewFilesFromTemplates(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				tc.fCreator.(*mockFileCreator).assertCreatedFiles(tc.want)
+				tc.fCreator.(*mockFileCreator2).assertCreatedFiles(tc.want)
 			}
 		})
 	}
