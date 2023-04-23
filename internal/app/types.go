@@ -42,6 +42,8 @@ type (
 
 	directoryCreator struct{ fs afero.Fs }
 
+	fileCreator struct{ fs afero.Fs }
+
 	filesCreator struct{ fs afero.Fs }
 )
 
@@ -125,7 +127,7 @@ func (creator *directoryCreator) CreateDirectoryStructure(
 	return nil
 }
 
-func (creator *filesCreator) CreateFiles(files map[string][]byte) error {
+func (creator *fileCreator) CreateFiles(files map[string][]byte) error {
 	bar, err := pterm.DefaultProgressbar.WithTotal(len(files)).WithTitle("Generating files").Start()
 	if err != nil {
 		return err
@@ -133,6 +135,35 @@ func (creator *filesCreator) CreateFiles(files map[string][]byte) error {
 
 	for name, data := range files {
 		if err := afero.WriteFile(creator.fs, name, data, 0644); err != nil {
+			_, _ = bar.Stop()
+
+			return errors.Wrapf(err, "failed to create file %s", name)
+		}
+		bar.Increment()
+	}
+
+	_, err = bar.Stop()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fc *filesCreator) CreateFiles(ctx context.Context, files generate.FileTemplates) error {
+	bar, err := pterm.DefaultProgressbar.WithTotal(len(files)).WithTitle("Generating files").Start()
+	if err != nil {
+		return err
+	}
+
+	for name, template := range files {
+		data := []byte(``)
+		if template != "" {
+			// parse template
+			continue
+		}
+
+		if err := afero.WriteFile(fc.fs, name, data, 0644); err != nil {
 			_, _ = bar.Stop()
 
 			return errors.Wrapf(err, "failed to create file %s", name)

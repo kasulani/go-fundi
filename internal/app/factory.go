@@ -10,6 +10,10 @@ func newDirectoryCreator(fs afero.Fs) *directoryCreator {
 	return &directoryCreator{fs: fs}
 }
 
+func newFileCreator(fs afero.Fs) *fileCreator {
+	return &fileCreator{fs: fs}
+}
+
 func newFilesCreator(fs afero.Fs) *filesCreator {
 	return &filesCreator{fs: fs}
 }

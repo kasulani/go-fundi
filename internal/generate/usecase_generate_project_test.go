@@ -97,7 +97,7 @@ func TestGenerateEmptyFiles(t *testing.T) {
 		expectedErr      error
 		configFile       *ConfigurationFile
 		structureCreator DirectoryStructureCreator
-		fileCreator      FileCreator
+		fileCreator      FilesCreator
 		expectedFiles    []string
 	}{
 		"when the file creator fails, return an error": {
@@ -107,7 +107,7 @@ func TestGenerateEmptyFiles(t *testing.T) {
 					return nil
 				},
 			),
-			fileCreator: mockFileCreator(func(files map[string][]byte) error {
+			fileCreator: mockFilesCreator(func(_ context.Context, _ *Metadata, _ FileTemplates) error {
 				return errors.New("an-OS-error")
 			}),
 			configFile: NewTestConfigurationFile(),
@@ -120,7 +120,7 @@ func TestGenerateEmptyFiles(t *testing.T) {
 				"./project_root_directory/internal/domain/domain.go",
 			},
 			structureCreator: &inMemoryDirectoryStructureCreator{test: t, fileSystem: fs},
-			fileCreator:      &inMemoryFileCreator{test: t, fileSystem: fs},
+			fileCreator:      &inMemoryFilesCreator{test: t, fileSystem: fs},
 		},
 	}
 
@@ -138,28 +138,28 @@ func TestGenerateEmptyFiles(t *testing.T) {
 				assert.EqualError(t, err, testCase.expectedErr.Error())
 			case false:
 				assert.NoError(t, err)
-				testCase.fileCreator.(*inMemoryFileCreator).assertCreatedFiles(testCase.expectedFiles)
+				testCase.fileCreator.(*inMemoryFilesCreator).assertCreatedFiles(testCase.expectedFiles)
 			}
 		})
 	}
 }
 
-func TestGetAllFilesInTheConfigFile(t *testing.T) {
+func TestGetFilesAndTemplates(t *testing.T) {
 	tests := map[string]struct {
-		expectedFiles []string
-		configFile    *ConfigurationFile
+		expectedFileTemplates FileTemplates
+		configFile            *ConfigurationFile
 	}{
-		"returns all files in the configurationFile": {
-			expectedFiles: []string{
-				"project_root_directory/README.md",
-				"project_root_directory/cmd/main.go",
-				"project_root_directory/internal/domain/domain.go",
+		"returns all files templates in the configurationFile": {
+			expectedFileTemplates: FileTemplates{
+				"project_root_directory/README.md":                 "README.md.tmpl",
+				"project_root_directory/cmd/main.go":               "main.go.tmpl",
+				"project_root_directory/internal/domain/domain.go": "domain.go.tmpl",
 			},
 			configFile: NewTestConfigurationFile(),
 		},
-		"returns an empty list of files": {
-			expectedFiles: make([]string, 0),
-			configFile:    NewConfigurationFile(&Metadata{output: ".", templates: "./testdata"}, Directories{}),
+		"returns an empty list of file templates": {
+			expectedFileTemplates: FileTemplates{},
+			configFile:            NewConfigurationFile(&Metadata{output: ".", templates: "./testdata"}, Directories{}),
 		},
 	}
 
@@ -168,14 +168,36 @@ func TestGetAllFilesInTheConfigFile(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			useCase := NewProjectUseCase(mockDirectoryStructureCreator(
-				func(_ context.Context, _ *ProjectDirectoryStructure) error {
-					return nil
-				},
-			), nil)
-			actualDirs := useCase.getAllFilesInTheConfigFile(testCase.configFile.directories)
+			assert.Equal(t, testCase.expectedFileTemplates, testCase.configFile.getFilesAndTemplates())
+		})
+	}
+}
 
-			assert.Equal(t, testCase.expectedFiles, actualDirs)
+func TestGetFilesIgnoreTemplates(t *testing.T) {
+	tests := map[string]struct {
+		expectedFileTemplates FileTemplates
+		configFile            *ConfigurationFile
+	}{
+		"returns all files templates in the configurationFile": {
+			expectedFileTemplates: FileTemplates{
+				"project_root_directory/README.md":                 "",
+				"project_root_directory/cmd/main.go":               "",
+				"project_root_directory/internal/domain/domain.go": "",
+			},
+			configFile: NewTestConfigurationFile(),
+		},
+		"returns an empty list of file templates": {
+			expectedFileTemplates: FileTemplates{},
+			configFile:            NewConfigurationFile(&Metadata{output: ".", templates: "./testdata"}, Directories{}),
+		},
+	}
+
+	for name, testCase := range tests {
+		testCase := testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, testCase.expectedFileTemplates, testCase.configFile.getFilesIgnoreTemplates())
 		})
 	}
 }

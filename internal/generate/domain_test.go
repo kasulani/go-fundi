@@ -211,7 +211,7 @@ func TestGenerateEmptyFiles2(t *testing.T) {
 	}
 }
 
-func TestGetFilesAndTemplates(t *testing.T) {
+func TestGetFileAndTemplates(t *testing.T) {
 	tests := map[string]struct {
 		want      map[string]*TemplateFile
 		hasError  bool

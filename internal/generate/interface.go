@@ -12,4 +12,9 @@ type (
 	FileCreator interface {
 		CreateFiles(files map[string][]byte) error
 	}
+
+	// FilesCreator interface defines CreateFiles.
+	FilesCreator interface {
+		CreateFiles(ctx context.Context, metadata *Metadata, files FileTemplates) error
+	}
 )
