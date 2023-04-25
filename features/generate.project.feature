@@ -15,67 +15,6 @@ Feature: Generate project directories
     failed to unmarshal YAML data: yaml: did not find expected alphabetic or numeric character
     """
 
-#  Scenario: generate directories only
-#    Given I have the following configuration
-#    """
-#    metadata:
-#      output: "."
-#      templates: "./testdata"
-#      values: "./testdata/.values.yml"
-#    directories:
-#      - name: funditest
-#        directories:
-#          - name: cmd
-#          - name: internal
-#    """
-#    When I execute the cli command
-#    """
-#    fundi generate-cmd -f {{.File}}
-#    """
-#    Then I must get an exit code 0
-#    When I execute the cli command
-#    """
-#    ls funditest
-#    """
-#    Then I must get an exit code 0
-#    And I must get a command output
-#    """
-#    cmd
-#    internal
-#    """
-
-#  Scenario: generate empty files
-#    Given I have the following configuration
-#    """
-#    metadata:
-#      output: "."
-#      templates: "./testdata"
-#      values: "./testdata/.values.yml"
-#    directories:
-#      - name: funditest
-#        files:
-#          - name: README.md
-#        directories:
-#          - name: cmd
-#          - name: internal
-#    """
-#    When I execute the cli command
-#    """
-#    fundi generate-cmd -f {{.File}}
-#    """
-#    Then I must get an exit code 0
-#    When I execute the cli command
-#    """
-#    ls funditest
-#    """
-#    Then I must get an exit code 0
-#    And I must get a command output
-#    """
-#    README.md
-#    cmd
-#    internal
-#    """
-
   Scenario: generate all
     Given I have the following configuration
     """
@@ -145,6 +84,38 @@ Feature: Generate project directories
     Then I must get an exit code 0
     And I must get a command output
     """
+    cmd
+    internal
+    """
+
+  Scenario: generate empty files
+    Given I have the following configuration
+    """
+    metadata:
+      output: "."
+      templates: "./testdata"
+      values: "./testdata/.values.yml"
+    directories:
+      - name: funditest
+        files:
+          - name: README.md
+        directories:
+          - name: cmd
+          - name: internal
+    """
+    When I execute the cli command
+    """
+    fundi generate-cmd -f {{.File}}
+    """
+    Then I must get an exit code 0
+    When I execute the cli command
+    """
+    ls funditest
+    """
+    Then I must get an exit code 0
+    And I must get a command output
+    """
+    README.md
     cmd
     internal
     """
