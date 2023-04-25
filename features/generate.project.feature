@@ -70,7 +70,7 @@ Feature: Generate project directories
     """
     When I execute the cli command
     """
-    fundi generate-cmd --empty-files -f {{.File}}
+    fundi generate-cmd -f {{.File}}
     """
     Then I must get an exit code 0
     When I execute the cli command
