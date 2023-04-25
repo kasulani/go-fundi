@@ -34,7 +34,7 @@ type (
 	// FundiFileReaderFunc is an adapter type to allow use of ordinary functions as fundi file readers.
 	FundiFileReaderFunc func() (*FundiFile, error)
 
-	// FileCreatorFunc is an adapter type to allow use of ordinary functions as directory FileCreator.
+	// FileCreatorFunc is an adapter type to allow use of ordinary functions as directory FilesCreator.
 	FileCreatorFunc func(files map[string][]byte) error
 
 	// TemplateFile represents a template file.
@@ -48,12 +48,12 @@ type (
 		path string
 	}
 
-	// TemplateParser interface defines ParseTemplates method.
-	TemplateParser interface {
+	// TemplateParser2 interface defines ParseTemplates method.
+	TemplateParser2 interface {
 		ParseTemplates(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error)
 	}
 
-	// TemplateParserFunc is an adapter type to allow use of ordinary functions as directory TemplateParser.
+	// TemplateParserFunc is an adapter type to allow use of ordinary functions as directory TemplateParser2.
 	TemplateParserFunc func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error)
 )
 

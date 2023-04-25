@@ -249,7 +249,7 @@ func TestNewFilesFromTemplates(t *testing.T) {
 	tests := map[string]struct {
 		reader   FundiFileReader
 		fCreator FileCreator
-		parser   TemplateParser
+		parser   TemplateParser2
 		hasError bool
 		want     []string
 	}{
@@ -293,7 +293,7 @@ func TestNewFilesFromTemplates(t *testing.T) {
 			}),
 			hasError: true,
 		},
-		"ParseTemplates fails": {
+		"CreateFilesFromTemplates fails": {
 			reader: FundiFileReaderFunc(reader(t)),
 			parser: TemplateParserFunc(func(data map[string]*TemplateFile, templatePath string) (map[string][]byte, error) {
 				return nil, errors.New("parse-error")
@@ -346,7 +346,7 @@ func TestInitialiseUseCase(t *testing.T) {
 		skipTemplates    bool
 		fileReader       FundiFileReader
 		fileCreator      FileCreator
-		parser           TemplateParser
+		parser           TemplateParser2
 		structureCreator StructureCreator
 		expectedError    error
 	}{

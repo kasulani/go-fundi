@@ -68,11 +68,6 @@ type (
 		fs      afero.Fs
 	}
 
-	filesCreator struct {
-		spinner *spinner
-		fs      afero.Fs
-	}
-
 	templateParser struct {
 		spinner *spinner
 		fs      afero.Fs
@@ -323,25 +318,6 @@ func (sp *spinner) asSuccessful() {
 
 func (sp *spinner) asFailure() {
 	sp.printer.Fail()
-}
-
-func newFilesCreator(fs afero.Fs, tracker *spinner) *filesCreator {
-	return &filesCreator{spinner: tracker, fs: fs}
-}
-
-func (creator *filesCreator) CreateFiles(files map[string][]byte) error {
-	spin := creator.spinner.start("Creating files...")
-	for name, data := range files {
-		spin.message(fmt.Sprintf("Creating files: %s...", name))
-		if err := afero.WriteFile(creator.fs, name, data, 0644); err != nil {
-			spin.message("Creating files: failed ✗").asFailure()
-
-			return err
-		}
-	}
-	spin.message("Creating files: finished ✓").asSuccessful()
-
-	return nil
 }
 
 func newTemplateParser(fs afero.Fs, tracker *spinner) *templateParser {

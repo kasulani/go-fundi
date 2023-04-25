@@ -1,9 +1,13 @@
 package app
 
 import (
+	"bytes"
 	"context"
+	"os"
+	"text/template"
 
 	"github.com/pkg/errors"
+	"github.com/pterm/pterm"
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"
 
@@ -40,6 +44,10 @@ type (
 	fileReader struct{ fs afero.Fs }
 
 	directoryCreator struct{ fs afero.Fs }
+
+	fileCreator struct{ fs afero.Fs }
+
+	filesCreator struct{ fs afero.Fs }
 )
 
 // readYAMLFile returns an instance of yamlFile.
@@ -102,11 +110,127 @@ func (creator *directoryCreator) CreateDirectoryStructure(
 ) error {
 	dirs := structure.Directories()
 
+	bar, err := pterm.DefaultProgressbar.WithTotal(len(dirs)).WithTitle("Generating directories").Start()
+	if err != nil {
+		return err
+	}
+
 	for _, dir := range dirs {
 		if err := creator.fs.MkdirAll(dir, 0755); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to create directory %s", dir)
 		}
+		bar.Increment()
+	}
+
+	_, err = bar.Stop()
+	if err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (creator *fileCreator) CreateFiles(files map[string][]byte) error {
+	bar, err := pterm.DefaultProgressbar.WithTotal(len(files)).WithTitle("Generating files").Start()
+	if err != nil {
+		return err
+	}
+
+	for name, data := range files {
+		if err := afero.WriteFile(creator.fs, name, data, 0644); err != nil {
+			_, _ = bar.Stop()
+
+			return errors.Wrapf(err, "failed to create file %s", name)
+		}
+		bar.Increment()
+	}
+
+	_, err = bar.Stop()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fc *filesCreator) CreateFiles(
+	_ context.Context,
+	metadata *generate.Metadata,
+	templateFiles generate.FileTemplates,
+) error {
+	bar, err := pterm.DefaultProgressbar.WithTotal(len(templateFiles)).WithTitle("Generating files").Start()
+	if err != nil {
+		return err
+	}
+
+	templateValues, err := fc.getTemplateValues(metadata.GetValuesPath())
+	if err != nil {
+		return err
+	}
+
+	templatePath := metadata.GetTemplatePath()
+
+	for name, templateFile := range templateFiles {
+		data, err := fc.parseTemplate(templatePath, templateFile, templateValues)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse template %s", templateFile)
+		}
+
+		if err := afero.WriteFile(fc.fs, name, data, 0644); err != nil {
+			_, _ = bar.Stop()
+
+			return errors.Wrapf(err, "failed to create file %s", name)
+		}
+		bar.Increment()
+	}
+
+	_, err = bar.Stop()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fc *filesCreator) parseTemplate(
+	templatePath,
+	templateName string,
+	values map[string]interface{},
+) ([]byte, error) {
+	buffer := new(bytes.Buffer)
+	if templateName == "" {
+		return buffer.Bytes(), nil
+	}
+
+	contents, err := afero.ReadFile(fc.fs, templatePath+string(os.PathSeparator)+templateName)
+	if err != nil {
+		return buffer.Bytes(), err
+	}
+
+	tmpl, err := template.New(templateName).Parse(string(contents))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tmpl.Execute(buffer, values[templateName]); err != nil {
+		return nil, err
+	}
+
+	return buffer.Bytes(), nil
+}
+
+func (fc *filesCreator) getTemplateValues(path string) (map[string]interface{}, error) {
+	values := make(map[string]interface{})
+
+	valuesFile, err := afero.ReadFile(fc.fs, path)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read values file %s", path)
+	}
+
+	err = yaml.Unmarshal(valuesFile, &values)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal values file %s", path)
+	}
+
+	return values, nil
 }

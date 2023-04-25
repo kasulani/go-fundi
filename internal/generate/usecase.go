@@ -24,7 +24,7 @@ type (
 	FilesUseCase struct {
 		fileReader  FundiFileReader
 		fileCreator FileCreator
-		parser      TemplateParser
+		parser      TemplateParser2
 	}
 
 	// InitialiseUseCase type.
@@ -65,7 +65,7 @@ func NewEmptyFilesUseCase(reader FundiFileReader, creator FileCreator) *EmptyFil
 }
 
 // NewFilesUseCase returns an instance of FilesUseCase.
-func NewFilesUseCase(reader FundiFileReader, creator FileCreator, parser TemplateParser) *FilesUseCase {
+func NewFilesUseCase(reader FundiFileReader, creator FileCreator, parser TemplateParser2) *FilesUseCase {
 	return &FilesUseCase{
 		fileReader:  reader,
 		fileCreator: creator,

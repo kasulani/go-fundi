@@ -34,8 +34,8 @@ func NewConfigurationFile(metadata *Metadata, directories Directories) *Configur
 }
 
 // NewProjectUseCase returns an instance of ProjectUseCase.
-func NewProjectUseCase(structureCreator DirectoryStructureCreator, fileCreator FileCreator) *ProjectUseCase {
-	return &ProjectUseCase{structureCreator: structureCreator, fileCreator: fileCreator}
+func NewProjectUseCase(structureCreator DirectoryStructureCreator, fileCreator FilesCreator) *ProjectUseCase {
+	return &ProjectUseCase{structureCreator: structureCreator, filesCreator: fileCreator}
 }
 
 // NewTestConfigurationFile returns a test ConfigurationFile you can use in unit tests.

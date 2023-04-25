@@ -16,11 +16,11 @@ type (
 		test       *testing.T
 		fileSystem afero.Fs
 	}
-	mockFileCreator     func(files map[string][]byte) error
-	inMemoryFileCreator struct {
+	inMemoryFilesCreator struct {
 		test       *testing.T
 		fileSystem afero.Fs
 	}
+	mockFilesCreator func(ctx context.Context, metadata *Metadata, files FileTemplates) error
 )
 
 // CreateDirectoryStructure is a mock.
@@ -61,17 +61,18 @@ func (m *inMemoryDirectoryStructureCreator) assertDirectoryStructureExists(dirs 
 	}
 }
 
-// CreateFiles is a mock.
-func (m mockFileCreator) CreateFiles(files map[string][]byte) error {
-	return m(files)
-}
-
-func (mf *inMemoryFileCreator) CreateFiles(files map[string][]byte) error {
+// CreateFiles is a mock
+func (mf *inMemoryFilesCreator) CreateFiles(ctx context.Context, metadata *Metadata, files FileTemplates) error {
 	mf.test.Helper()
 
-	for name, data := range files {
+	for name, template := range files {
+		data := []byte(``)
 		mf.test.Logf("creating file: %s...", name)
 
+		if template != "" {
+			// parse template
+			continue
+		}
 		if err := afero.WriteFile(mf.fileSystem, name, data, 0644); err != nil {
 			return err
 		}
@@ -80,7 +81,7 @@ func (mf *inMemoryFileCreator) CreateFiles(files map[string][]byte) error {
 	return nil
 }
 
-func (mf *inMemoryFileCreator) assertCreatedFiles(filenames []string) {
+func (mf *inMemoryFilesCreator) assertCreatedFiles(filenames []string) {
 	mf.test.Helper()
 
 	for _, name := range filenames {
@@ -88,4 +89,9 @@ func (mf *inMemoryFileCreator) assertCreatedFiles(filenames []string) {
 		assert.False(mf.test, info.IsDir())
 		assert.False(mf.test, os.IsNotExist(err))
 	}
+}
+
+// CreateFiles is a mock.
+func (m mockFilesCreator) CreateFiles(ctx context.Context, metadata *Metadata, files FileTemplates) error {
+	return m(ctx, metadata, files)
 }

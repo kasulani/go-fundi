@@ -22,6 +22,7 @@ func (specs *TestSpecifications) registerAllSteps(sc *godog.ScenarioContext) {
 	sc.Step(`^I must get a command output$`, specs.iMustGetACommandOutput)
 	sc.Step(`^file "([^"]*)" has contents$`, specs.fileHasContents)
 	sc.Step(`^I have the following configuration$`, specs.iHaveTheFollowingConfiguration)
+	sc.Step(`^a "([^"]*)" file with the following contents$`, specs.aFileWithTheFollowingContents)
 }
 
 func (specs *TestSpecifications) iHave(input string) error {
@@ -104,6 +105,20 @@ func (specs *TestSpecifications) iHaveTheFollowingConfiguration(config *godog.Do
 	specs.in.File = fmt.Sprintf("%s/testdata/.fundi.yaml", specs.workingDirectory())
 
 	if err := os.WriteFile(specs.in.File, data, 0600); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (specs *TestSpecifications) aFileWithTheFollowingContents(fileName string, fileData *godog.DocString) error {
+	data := []byte(fileData.Content)
+
+	if err := os.WriteFile(
+		fmt.Sprintf("%s/testdata/%s", specs.workingDirectory(), fileName),
+		data,
+		0600,
+	); err != nil {
 		return err
 	}
 

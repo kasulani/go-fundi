@@ -5,4 +5,5 @@ build
 *funditest*
 .draft-fundi.yaml
 testdata/.fundi.yaml
-
+testdata/.values.yml
+testdata/main.go.tmpl

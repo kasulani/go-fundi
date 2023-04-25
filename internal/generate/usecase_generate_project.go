@@ -12,7 +12,7 @@ type (
 	// ProjectUseCase creates the project directory structure and files.
 	ProjectUseCase struct {
 		structureCreator DirectoryStructureCreator
-		fileCreator      FileCreator
+		filesCreator     FilesCreator
 	}
 )
 
@@ -44,25 +44,6 @@ func (useCase *ProjectUseCase) getAllDirectoriesInTheConfigFile(directories Dire
 	return dirs
 }
 
-func (useCase *ProjectUseCase) getAllFilesInTheConfigFile(directories Directories) []string {
-	files := make([]string, 0)
-
-	for _, directory := range directories {
-		for _, file := range directory.files {
-			files = append(files, directory.name+string(os.PathSeparator)+file.name)
-		}
-
-		if directory.hasSubDirectories() {
-			otherFiles := useCase.getAllFilesInTheConfigFile(directory.subDirectories)
-			for _, file := range otherFiles {
-				files = append(files, directory.name+string(os.PathSeparator)+file)
-			}
-		}
-	}
-
-	return files
-}
-
 func (useCase *ProjectUseCase) generateProjectStructure(ctx context.Context, configFile *ConfigurationFile) error {
 	err := useCase.structureCreator.CreateDirectoryStructure(
 		ctx,
@@ -78,15 +59,20 @@ func (useCase *ProjectUseCase) generateProjectStructure(ctx context.Context, con
 	return nil
 }
 
-func (useCase *ProjectUseCase) generateEmptyFiles(_ context.Context, configFile *ConfigurationFile) error {
-	files := make(map[string][]byte)
-
-	allFiles := useCase.getAllFilesInTheConfigFile(configFile.directories)
-	for _, file := range allFiles {
-		files[file] = []byte("")
+func (useCase *ProjectUseCase) generateEmptyFiles(ctx context.Context, configFile *ConfigurationFile) error {
+	if err := useCase.filesCreator.CreateFiles(
+		ctx,
+		configFile.metadata,
+		configFile.getFilesIgnoreTemplates(),
+	); err != nil {
+		return errors.Wrap(err, "failed to create project files")
 	}
 
-	if err := useCase.fileCreator.CreateFiles(files); err != nil {
+	return nil
+}
+
+func (useCase *ProjectUseCase) generateFilesFromTemplates(ctx context.Context, configFile *ConfigurationFile) error {
+	if err := useCase.filesCreator.CreateFiles(ctx, configFile.metadata, configFile.getFilesAndTemplates()); err != nil {
 		return errors.Wrap(err, "failed to create project files")
 	}
 
@@ -109,7 +95,14 @@ func (useCase *ProjectUseCase) ScaffoldProject(
 
 		return useCase.generateEmptyFiles(ctx, configFile)
 	case All:
-		return errors.New("not-implemented")
+		if err := useCase.generateProjectStructure(ctx, configFile); err != nil {
+			return err
+		}
+		if err := useCase.generateFilesFromTemplates(ctx, configFile); err != nil {
+			return err
+		}
+
+		return nil
 	default:
 		return fmt.Errorf("unknown output selector %s", output)
 	}
