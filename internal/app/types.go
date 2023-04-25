@@ -1,7 +1,10 @@
 package app
 
 import (
+	"bytes"
 	"context"
+	"os"
+	"text/template"
 
 	"github.com/pkg/errors"
 	"github.com/pterm/pterm"
@@ -150,17 +153,27 @@ func (creator *fileCreator) CreateFiles(files map[string][]byte) error {
 	return nil
 }
 
-func (fc *filesCreator) CreateFiles(ctx context.Context, files generate.FileTemplates) error {
-	bar, err := pterm.DefaultProgressbar.WithTotal(len(files)).WithTitle("Generating files").Start()
+func (fc *filesCreator) CreateFiles(
+	_ context.Context,
+	metadata *generate.Metadata,
+	templateFiles generate.FileTemplates,
+) error {
+	bar, err := pterm.DefaultProgressbar.WithTotal(len(templateFiles)).WithTitle("Generating files").Start()
 	if err != nil {
 		return err
 	}
 
-	for name, template := range files {
-		data := []byte(``)
-		if template != "" {
-			// parse template
-			continue
+	templateValues, err := fc.getTemplateValues(metadata.GetValuesPath())
+	if err != nil {
+		return err
+	}
+
+	templatePath := metadata.GetTemplatePath()
+
+	for name, templateFile := range templateFiles {
+		data, err := fc.parseTemplate(templatePath, templateFile, templateValues)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse template %s", templateFile)
 		}
 
 		if err := afero.WriteFile(fc.fs, name, data, 0644); err != nil {
@@ -177,4 +190,47 @@ func (fc *filesCreator) CreateFiles(ctx context.Context, files generate.FileTemp
 	}
 
 	return nil
+}
+
+func (fc *filesCreator) parseTemplate(
+	templatePath,
+	templateName string,
+	values map[string]interface{},
+) ([]byte, error) {
+	buffer := new(bytes.Buffer)
+	if templateName == "" {
+		return buffer.Bytes(), nil
+	}
+
+	contents, err := afero.ReadFile(fc.fs, templatePath+string(os.PathSeparator)+templateName)
+	if err != nil {
+		return buffer.Bytes(), err
+	}
+
+	tmpl, err := template.New(templateName).Parse(string(contents))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tmpl.Execute(buffer, values[templateName]); err != nil {
+		return nil, err
+	}
+
+	return buffer.Bytes(), nil
+}
+
+func (fc *filesCreator) getTemplateValues(path string) (map[string]interface{}, error) {
+	values := make(map[string]interface{})
+
+	valuesFile, err := afero.ReadFile(fc.fs, path)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read values file %s", path)
+	}
+
+	err = yaml.Unmarshal(valuesFile, &values)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal values file %s", path)
+	}
+
+	return values, nil
 }
