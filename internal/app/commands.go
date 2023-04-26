@@ -11,8 +11,34 @@ import (
 )
 
 type (
+	// Command is cli command type.
+	Command struct {
+		*cobra.Command
+	}
+
+	rootCommand Command
+
+	// SubCommand interface defines AddTo method.
+	SubCommand interface {
+		AddTo(root *rootCommand)
+	}
+
+	// subCommands is a slice of SubCommand.
+	subCommands []SubCommand
+
 	generateProjectCommand Command
 )
+
+func newRootCommand() *rootCommand {
+	return &rootCommand{
+		Command: &cobra.Command{
+			Use:     "fundi",
+			Short:   "fundi is a scaffolding and code generation cli tool",
+			Long:    `fundi is a scaffolding and code generation cli tool`,
+			Version: "1.0.0",
+		},
+	}
+}
 
 func newGenerateProjectCommand(
 	ctx context.Context,
