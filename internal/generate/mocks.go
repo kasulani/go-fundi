@@ -70,9 +70,9 @@ func (mf *inMemoryFilesCreator) CreateFiles(ctx context.Context, metadata *Metad
 		mf.test.Logf("creating file: %s...", name)
 
 		if template != "" {
-			// parse template
-			continue
+			data = []byte(template)
 		}
+
 		if err := afero.WriteFile(mf.fileSystem, name, data, 0644); err != nil {
 			return err
 		}
@@ -86,6 +86,10 @@ func (mf *inMemoryFilesCreator) assertCreatedFiles(filenames []string) {
 
 	for _, name := range filenames {
 		info, err := mf.fileSystem.Stat(name)
+		if info == nil {
+			mf.test.Error("file not found")
+		}
+
 		assert.False(mf.test, info.IsDir())
 		assert.False(mf.test, os.IsNotExist(err))
 	}

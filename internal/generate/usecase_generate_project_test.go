@@ -9,12 +9,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGenerateDirectoriesOnly(t *testing.T) {
+func TestScaffoldProject(t *testing.T) {
+	fs := afero.NewMemMapFs()
+
 	tests := map[string]struct {
 		expectedErr       error
 		configFile        *ConfigurationFile
 		structureCreator  DirectoryStructureCreator
+		fileCreator       FilesCreator
 		expectedStructure []string
+		expectedFiles     []string
 	}{
 		"when the directory structure creator fails, return an error": {
 			expectedErr: errors.New("failed to create project directory structure: an-OS-error"),
@@ -25,13 +29,31 @@ func TestGenerateDirectoriesOnly(t *testing.T) {
 			),
 			configFile: NewTestConfigurationFile(),
 		},
-		"when the project directories are generated successfully, return no error": {
+		"when the file creator fails, return an error": {
+			expectedErr: errors.New("failed to create project files: an-OS-error"),
+			structureCreator: mockDirectoryStructureCreator(
+				func(ctx context.Context, structure *ProjectDirectoryStructure) error {
+					return nil
+				},
+			),
+			fileCreator: mockFilesCreator(func(_ context.Context, _ *Metadata, _ FileTemplates) error {
+				return errors.New("an-OS-error")
+			}),
+			configFile: NewTestConfigurationFile(),
+		},
+		"when scaffolding is successful, return no error": {
 			configFile: NewTestConfigurationFile(),
 			expectedStructure: []string{
 				"./project_root_directory/cmd",
 				"./project_root_directory/internal/domain",
 			},
-			structureCreator: &inMemoryDirectoryStructureCreator{test: t, fileSystem: afero.NewMemMapFs()},
+			expectedFiles: []string{
+				"./project_root_directory/README.md",
+				"./project_root_directory/cmd/main.go",
+				"./project_root_directory/internal/domain/domain.go",
+			},
+			structureCreator: &inMemoryDirectoryStructureCreator{test: t, fileSystem: fs},
+			fileCreator:      &inMemoryFilesCreator{test: t, fileSystem: fs},
 		},
 	}
 
@@ -41,8 +63,8 @@ func TestGenerateDirectoriesOnly(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			useCase := NewProjectUseCase(testCase.structureCreator, nil)
-			err := useCase.ScaffoldProject(context.Background(), DirectoriesOnly, testCase.configFile)
+			useCase := NewProjectUseCase(testCase.structureCreator, testCase.fileCreator)
+			err := useCase.ScaffoldProject(context.Background(), testCase.configFile)
 
 			switch testCase.expectedErr != nil {
 			case true:
@@ -50,6 +72,7 @@ func TestGenerateDirectoriesOnly(t *testing.T) {
 			case false:
 				assert.NoError(t, err)
 				testCase.structureCreator.(*inMemoryDirectoryStructureCreator).assertDirectoryStructureExists(testCase.expectedStructure)
+				testCase.fileCreator.(*inMemoryFilesCreator).assertCreatedFiles(testCase.expectedFiles)
 			}
 		})
 	}
@@ -90,60 +113,6 @@ func TestGetAllDirectoriesInTheConfigFile(t *testing.T) {
 	}
 }
 
-func TestGenerateEmptyFiles(t *testing.T) {
-	fs := afero.NewMemMapFs()
-
-	tests := map[string]struct {
-		expectedErr      error
-		configFile       *ConfigurationFile
-		structureCreator DirectoryStructureCreator
-		fileCreator      FilesCreator
-		expectedFiles    []string
-	}{
-		"when the file creator fails, return an error": {
-			expectedErr: errors.New("failed to create project files: an-OS-error"),
-			structureCreator: mockDirectoryStructureCreator(
-				func(ctx context.Context, structure *ProjectDirectoryStructure) error {
-					return nil
-				},
-			),
-			fileCreator: mockFilesCreator(func(_ context.Context, _ *Metadata, _ FileTemplates) error {
-				return errors.New("an-OS-error")
-			}),
-			configFile: NewTestConfigurationFile(),
-		},
-		"when the project directories are generated successfully, return no error": {
-			configFile: NewTestConfigurationFile(),
-			expectedFiles: []string{
-				"./project_root_directory/README.md",
-				"./project_root_directory/cmd/main.go",
-				"./project_root_directory/internal/domain/domain.go",
-			},
-			structureCreator: &inMemoryDirectoryStructureCreator{test: t, fileSystem: fs},
-			fileCreator:      &inMemoryFilesCreator{test: t, fileSystem: fs},
-		},
-	}
-
-	for name, testCase := range tests {
-		testCase := testCase
-
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			useCase := NewProjectUseCase(testCase.structureCreator, testCase.fileCreator)
-			err := useCase.ScaffoldProject(context.Background(), EmptyFiles, testCase.configFile)
-
-			switch testCase.expectedErr != nil {
-			case true:
-				assert.EqualError(t, err, testCase.expectedErr.Error())
-			case false:
-				assert.NoError(t, err)
-				testCase.fileCreator.(*inMemoryFilesCreator).assertCreatedFiles(testCase.expectedFiles)
-			}
-		})
-	}
-}
-
 func TestGetFilesAndTemplates(t *testing.T) {
 	tests := map[string]struct {
 		expectedFileTemplates FileTemplates
@@ -169,35 +138,6 @@ func TestGetFilesAndTemplates(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, testCase.expectedFileTemplates, testCase.configFile.getFilesAndTemplates())
-		})
-	}
-}
-
-func TestGetFilesIgnoreTemplates(t *testing.T) {
-	tests := map[string]struct {
-		expectedFileTemplates FileTemplates
-		configFile            *ConfigurationFile
-	}{
-		"returns all files templates in the configurationFile": {
-			expectedFileTemplates: FileTemplates{
-				"project_root_directory/README.md":                 "",
-				"project_root_directory/cmd/main.go":               "",
-				"project_root_directory/internal/domain/domain.go": "",
-			},
-			configFile: NewTestConfigurationFile(),
-		},
-		"returns an empty list of file templates": {
-			expectedFileTemplates: FileTemplates{},
-			configFile:            NewConfigurationFile(&Metadata{output: ".", templates: "./testdata"}, Directories{}),
-		},
-	}
-
-	for name, testCase := range tests {
-		testCase := testCase
-
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, testCase.expectedFileTemplates, testCase.configFile.getFilesIgnoreTemplates())
 		})
 	}
 }

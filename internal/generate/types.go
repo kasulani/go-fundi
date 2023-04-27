@@ -83,21 +83,3 @@ func addFileAndTemplate(directory *Directory, fileTemplates FileTemplates, prefi
 		addFileAndTemplate(subDirectory, fileTemplates, prefix+string(os.PathSeparator)+subDirectory.name)
 	}
 }
-
-func (cf *ConfigurationFile) getFilesIgnoreTemplates() FileTemplates {
-	fileTemplates := make(FileTemplates)
-	for _, directory := range cf.directories {
-		addFileIgnoreTemplate(directory, fileTemplates, directory.name)
-	}
-	return fileTemplates
-}
-
-func addFileIgnoreTemplate(directory *Directory, fileTemplates FileTemplates, prefix string) {
-	for _, file := range directory.files {
-		fileTemplates[prefix+string(os.PathSeparator)+file.name] = ""
-	}
-
-	for _, subDirectory := range directory.subDirectories {
-		addFileIgnoreTemplate(subDirectory, fileTemplates, prefix+string(os.PathSeparator)+subDirectory.name)
-	}
-}

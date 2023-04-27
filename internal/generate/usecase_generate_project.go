@@ -2,7 +2,6 @@ package generate
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
@@ -14,15 +13,6 @@ type (
 		structureCreator DirectoryStructureCreator
 		filesCreator     FilesCreator
 	}
-)
-
-const (
-	// DirectoriesOnly is an output selector.
-	DirectoriesOnly = "directories-only"
-	// EmptyFiles is an output selector.
-	EmptyFiles = "empty-files"
-	// All is an output selector.
-	All = "all"
 )
 
 func (useCase *ProjectUseCase) getAllDirectoriesInTheConfigFile(directories Directories) []string {
@@ -59,11 +49,11 @@ func (useCase *ProjectUseCase) generateProjectStructure(ctx context.Context, con
 	return nil
 }
 
-func (useCase *ProjectUseCase) generateEmptyFiles(ctx context.Context, configFile *ConfigurationFile) error {
+func (useCase *ProjectUseCase) generateFilesFromTemplates(ctx context.Context, configFile *ConfigurationFile) error {
 	if err := useCase.filesCreator.CreateFiles(
 		ctx,
 		configFile.metadata,
-		configFile.getFilesIgnoreTemplates(),
+		configFile.getFilesAndTemplates(),
 	); err != nil {
 		return errors.Wrap(err, "failed to create project files")
 	}
@@ -71,39 +61,14 @@ func (useCase *ProjectUseCase) generateEmptyFiles(ctx context.Context, configFil
 	return nil
 }
 
-func (useCase *ProjectUseCase) generateFilesFromTemplates(ctx context.Context, configFile *ConfigurationFile) error {
-	if err := useCase.filesCreator.CreateFiles(ctx, configFile.metadata, configFile.getFilesAndTemplates()); err != nil {
-		return errors.Wrap(err, "failed to create project files")
+// ScaffoldProject using the provided ConfigurationFile.
+func (useCase *ProjectUseCase) ScaffoldProject(ctx context.Context, configFile *ConfigurationFile) error {
+	if err := useCase.generateProjectStructure(ctx, configFile); err != nil {
+		return err
+	}
+	if err := useCase.generateFilesFromTemplates(ctx, configFile); err != nil {
+		return err
 	}
 
 	return nil
-}
-
-// ScaffoldProject using the provided ConfigurationFile.
-func (useCase *ProjectUseCase) ScaffoldProject(
-	ctx context.Context,
-	output string,
-	configFile *ConfigurationFile,
-) error {
-	switch output {
-	case DirectoriesOnly:
-		return useCase.generateProjectStructure(ctx, configFile)
-	case EmptyFiles:
-		if err := useCase.generateProjectStructure(ctx, configFile); err != nil {
-			return err
-		}
-
-		return useCase.generateEmptyFiles(ctx, configFile)
-	case All:
-		if err := useCase.generateProjectStructure(ctx, configFile); err != nil {
-			return err
-		}
-		if err := useCase.generateFilesFromTemplates(ctx, configFile); err != nil {
-			return err
-		}
-
-		return nil
-	default:
-		return fmt.Errorf("unknown output selector %s", output)
-	}
 }

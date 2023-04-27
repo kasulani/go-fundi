@@ -59,22 +59,7 @@ func newGenerateProjectCommand(
 					os.Exit(1)
 				}
 
-				output := generate.All
-				flags := []string{generate.DirectoriesOnly, generate.EmptyFiles}
-
-				for _, flag := range flags {
-					isSet, err := cmd.Flags().GetBool(flag)
-					if err != nil {
-						println(err)
-					}
-
-					if isSet {
-						output = flag
-						break
-					}
-				}
-
-				if err := useCase.ScaffoldProject(ctx, output, yamlFile.toConfigurationFile()); err != nil {
+				if err := useCase.ScaffoldProject(ctx, yamlFile.toConfigurationFile()); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -83,9 +68,6 @@ func newGenerateProjectCommand(
 			},
 		},
 	}
-
-	cmd.Flags().Bool("directories-only", false, "generate project directories")
-	cmd.Flags().Bool("empty-files", false, "generate project directories and empty files")
 
 	cmd.PersistentFlags().StringVarP(
 		&filePath,
