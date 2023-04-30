@@ -35,12 +35,6 @@ type (
 		directories Directories
 	}
 
-	// ProjectDirectoryStructure represents the project directory tree.
-	ProjectDirectoryStructure struct {
-		output      string
-		directories []string
-	}
-
 	// FileTemplates is a map of file and its template.
 	FileTemplates map[string]string
 )
@@ -58,11 +52,6 @@ func (m *Metadata) GetTemplatePath() string {
 // GetValuesPath returns location of values.
 func (m *Metadata) GetValuesPath() string {
 	return m.values
-}
-
-// Directories returns a list of directories to be created.
-func (s *ProjectDirectoryStructure) Directories() []string {
-	return s.directories
 }
 
 func (d *Directory) hasSubDirectories() bool {

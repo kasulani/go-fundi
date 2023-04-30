@@ -29,7 +29,7 @@ func (test *Test) iExecuteTheCliCommand(command *godog.DocString) error {
 	}
 
 	parts := strings.Split(test.parseCommand(command.Content), " ")
-	test.cmd.output, test.cmd.error = exec.Command(parts[0], parts[1:]...).Output()
+	test.cmd.output, test.cmd.error = exec.Command(parts[0], parts[1:]...).Output() //nolint:gosec
 
 	return nil
 }
@@ -68,29 +68,6 @@ func (test *Test) parseCommand(cmd string) string {
 	}
 
 	return buf.String()
-}
-
-func (test *Test) fileHasContents(filename string, expected *godog.DocString) error {
-	var data []byte
-	var err error
-
-	switch filename {
-	case "doc.go":
-		data, err = os.ReadFile("./funditest/pkg/app/doc.go")
-		if err != nil {
-			test.log.Fatal("failed to open file", zap.Error(err))
-
-			return err
-		}
-	default:
-		return errors.New("unknown file name")
-	}
-
-	if !assert.Expect(string(data)).To(assert.BeIdenticalTo(expected.Content)) {
-		return errors.New("actual command output does not match the expected command output")
-	}
-
-	return nil
 }
 
 func (test *Test) iHaveTheFollowingConfiguration(config *godog.DocString) error {
