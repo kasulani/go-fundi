@@ -49,7 +49,7 @@ func newGenerateProjectCommand(
 
 	cmd := &generateProjectCommand{
 		&cobra.Command{
-			Use:   "generate-cmd",
+			Use:   "generate",
 			Short: "generate your project directory structure and files",
 			Long:  `use this subcommand to generate your project directory structure and files.`,
 			Run: func(cmd *cobra.Command, args []string) {

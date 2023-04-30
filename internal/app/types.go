@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"text/template"
 
@@ -108,6 +109,11 @@ func (creator *directoryCreator) CreateDirectoryStructure(
 	directories []string,
 ) error {
 	dirs := directories
+	if len(dirs) == 0 {
+		fmt.Println("no files to create")
+
+		return nil
+	}
 
 	bar, err := pterm.DefaultProgressbar.WithTotal(len(dirs)).WithTitle("Generating directories").Start()
 	if err != nil {
@@ -134,6 +140,12 @@ func (fc *filesCreator) CreateFiles(
 	metadata *generate.Metadata,
 	templateFiles generate.FileTemplates,
 ) error {
+	if len(templateFiles) == 0 {
+		fmt.Println("no files to create")
+
+		return nil
+	}
+
 	bar, err := pterm.DefaultProgressbar.WithTotal(len(templateFiles)).WithTitle("Generating files").Start()
 	if err != nil {
 		return err
