@@ -13,7 +13,7 @@ TEXT_INVERSE=\e[7m
 BUILD_DIR ?= $(CURDIR)/build
 BINARY_CLI=fundi
 BINARY_CLI_SRC=$(CURDIR)/cmd/fundi
-BDD_TEST=$(CURDIR)/internal/app
+BDD_TEST=$(CURDIR)/internal/behaviour
 
 GO_LINKER_FLAGS=-ldflags="-s -w"
 SRC_DIRS=internal
@@ -106,7 +106,7 @@ install-cli:
 #-----------------------------------------------------------------------------------------------------------------------
 # Testing
 #-----------------------------------------------------------------------------------------------------------------------
-.PHONY: test-unit test-unit-coverage test-behavior
+.PHONY: test-unit test-unit-coverage test-behavior test-behavior-coverage
 
 test-all: test-unit test-behaviour
 
@@ -121,6 +121,10 @@ test-unit-coverage:
 test-behaviour:
 	${call print, "Running behaviour tests"}
 	${call go, test -v -race -tags behaviour ${BDD_TEST}}
+
+test-behaviour-coverage:
+	${call print, "Running behaviour tests"}
+	${call go, test -v -race -tags behaviour ${BDD_TEST} -cover -coverprofile=coverage_unit.txt -covermode=atomic}
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Code style checks

@@ -1,18 +1,17 @@
 //go:build behaviour
 // +build behaviour
 
-package app
+package behaviour
 
 import (
 	"os"
 	"testing"
 
 	"github.com/cucumber/godog"
-	"github.com/kasulani/go-fundi/internal/behaviour"
 )
 
 func TestBehaviour(t *testing.T) {
-	specs := behaviour.NewTestSpecifications()
+	specs := NewTestSpecifications()
 	suite := godog.TestSuite{
 		Name:                 "fundi",
 		TestSuiteInitializer: initializeSuite(specs),
@@ -41,7 +40,7 @@ func featuresFiles(t *testing.T) []string {
 	return []string{parentDir + "/features"}
 }
 
-func initializeSuite(test *behaviour.Test) func(ts *godog.TestSuiteContext) {
+func initializeSuite(test *Test) func(ts *godog.TestSuiteContext) {
 	return func(ts *godog.TestSuiteContext) {
 		ts.AfterSuite(func() {
 			test.MustStop()
@@ -49,7 +48,7 @@ func initializeSuite(test *behaviour.Test) func(ts *godog.TestSuiteContext) {
 	}
 }
 
-func initializeScenarios(test *behaviour.Test) func(sc *godog.ScenarioContext) {
+func initializeScenarios(test *Test) func(sc *godog.ScenarioContext) {
 	return func(sc *godog.ScenarioContext) {
 		test.Loader(sc)
 		sc.BeforeScenario(func(s *godog.Scenario) {
