@@ -1,3 +1,4 @@
+//go:build behaviour
 // +build behaviour
 
 package app
@@ -40,19 +41,19 @@ func featuresFiles(t *testing.T) []string {
 	return []string{parentDir + "/features"}
 }
 
-func initializeSuite(specs *behaviour.TestSpecifications) func(ts *godog.TestSuiteContext) {
+func initializeSuite(test *behaviour.Test) func(ts *godog.TestSuiteContext) {
 	return func(ts *godog.TestSuiteContext) {
 		ts.AfterSuite(func() {
-			specs.MustStop()
+			test.MustStop()
 		})
 	}
 }
 
-func initializeScenarios(specs *behaviour.TestSpecifications) func(sc *godog.ScenarioContext) {
+func initializeScenarios(test *behaviour.Test) func(sc *godog.ScenarioContext) {
 	return func(sc *godog.ScenarioContext) {
-		specs.Loader(sc)
+		test.Loader(sc)
 		sc.BeforeScenario(func(s *godog.Scenario) {
-			specs.MustClearState(s)
+			test.MustClearState(s)
 		})
 	}
 }
