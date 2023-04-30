@@ -28,19 +28,13 @@ func Container() *di.Container {
 		di.Provide(context.Background),
 		di.Provide(newConfig),
 		di.Provide(afero.NewOsFs),
-		di.Provide(newSpinner),
-		di.Provide(newStructureCreator, di.As(new(generate.StructureCreator))),
-		di.Provide(newFileCreator, di.As(new(generate.FileCreator))),
-		di.Provide(newYmlConfig, di.As(new(generate.FundiFileReader))),
-		di.Provide(newTemplateParser, di.As(new(generate.TemplateParser2))),
-		generate.ProvideUseCases(),
 		di.Provide(newFileReader),
+		di.Provide(generate.NewProjectUseCase),
+		di.Provide(newRootCommand),
+		di.Invoke(registerSubCommands),
+		di.Provide(newGenerateProjectCommand, di.As(new(SubCommand))),
 		di.Provide(newDirectoryCreator, di.As(new(generate.DirectoryStructureCreator))),
 		di.Provide(newFilesCreator, di.As(new(generate.FilesCreator))),
-		di.Provide(generate.NewProjectUseCase),
-		di.Provide(newGenerateProjectCommand, di.As(new(SubCommand))),
-		provideCLICommands(),
-		di.Invoke(registerSubCommands),
 	)
 
 	if err != nil {

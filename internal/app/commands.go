@@ -11,8 +11,34 @@ import (
 )
 
 type (
+	// Command is cli command type.
+	Command struct {
+		*cobra.Command
+	}
+
+	rootCommand Command
+
+	// SubCommand interface defines AddTo method.
+	SubCommand interface {
+		AddTo(root *rootCommand)
+	}
+
+	// subCommands is a slice of SubCommand.
+	subCommands []SubCommand
+
 	generateProjectCommand Command
 )
+
+func newRootCommand() *rootCommand {
+	return &rootCommand{
+		Command: &cobra.Command{
+			Use:     "fundi",
+			Short:   "fundi is a scaffolding and code generation cli tool",
+			Long:    `fundi is a scaffolding and code generation cli tool`,
+			Version: "1.0.0",
+		},
+	}
+}
 
 func newGenerateProjectCommand(
 	ctx context.Context,
@@ -23,7 +49,7 @@ func newGenerateProjectCommand(
 
 	cmd := &generateProjectCommand{
 		&cobra.Command{
-			Use:   "generate-cmd",
+			Use:   "generate",
 			Short: "generate your project directory structure and files",
 			Long:  `use this subcommand to generate your project directory structure and files.`,
 			Run: func(cmd *cobra.Command, args []string) {
@@ -33,22 +59,7 @@ func newGenerateProjectCommand(
 					os.Exit(1)
 				}
 
-				output := generate.All
-				flags := []string{generate.DirectoriesOnly, generate.EmptyFiles}
-
-				for _, flag := range flags {
-					isSet, err := cmd.Flags().GetBool(flag)
-					if err != nil {
-						println(err)
-					}
-
-					if isSet {
-						output = flag
-						break
-					}
-				}
-
-				if err := useCase.ScaffoldProject(ctx, output, yamlFile.toConfigurationFile()); err != nil {
+				if err := useCase.ScaffoldProject(ctx, yamlFile.toConfigurationFile()); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
@@ -57,9 +68,6 @@ func newGenerateProjectCommand(
 			},
 		},
 	}
-
-	cmd.Flags().Bool("directories-only", false, "generate project directories")
-	cmd.Flags().Bool("empty-files", false, "generate project directories and empty files")
 
 	cmd.PersistentFlags().StringVarP(
 		&filePath,

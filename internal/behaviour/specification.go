@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -14,36 +15,34 @@ import (
 )
 
 type (
-	out struct {
-		cmdOutput []byte
-		error     error
+	cmd struct {
+		output []byte
+		error  error
 	}
 
-	in struct {
-		File string
-	}
-
-	// TestSpecifications used in behaviour tests.
-	TestSpecifications struct {
-		ctx      context.Context
-		log      *zap.Logger
-		failures []string
-		out      *out
-		in       *in
+	// Test used in behaviour tests.
+	Test struct {
+		ctx        context.Context
+		log        *zap.Logger
+		failures   []string
+		cmd        *cmd
+		ConfigFile string
 	}
 )
 
-// NewTestSpecifications provides a new instance of TestSpecifications.
-func NewTestSpecifications() *TestSpecifications {
+const testDir = "./funditest"
+
+// NewTestSpecifications provides a new instance of Test.
+func NewTestSpecifications() *Test {
 	l, err := loadLogger()
 	if err != nil {
 		log.Fatalf("failed to create logger: %q", err)
 	}
 
-	specs := &TestSpecifications{
+	specs := &Test{
 		ctx: context.Background(),
 		log: l,
-		out: &out{},
+		cmd: &cmd{},
 	}
 
 	specs.log.Info("register fail handler")
@@ -69,42 +68,49 @@ func loadLogger() (*zap.Logger, error) {
 }
 
 // Loader bootstraps the tests.
-func (specs *TestSpecifications) Loader(sc *godog.ScenarioContext) {
-	specs.registerAllSteps(sc)
+func (test *Test) Loader(sc *godog.ScenarioContext) {
+	test.registerAllSteps(sc)
 
 	sc.After(func(ctx context.Context, s *godog.Scenario, err error) (context.Context, error) {
 		if err == nil {
-			return specs.ctx, nil
+			return test.ctx, nil
 		}
 
-		for _, failure := range specs.failures {
+		for _, failure := range test.failures {
 			fmt.Printf("scenario has failed with error: \n%s\n", failure)
 		}
 
-		specs.failures = []string{}
+		test.failures = []string{}
 
-		return specs.ctx, nil
+		return test.ctx, nil
 	})
 }
 
 // MustStop frees up all test resources.
-func (specs *TestSpecifications) MustStop() {
-	specs.log.Info("clean up directories created during the testing")
-	if err := afero.NewOsFs().RemoveAll("./funditest"); err != nil {
-		specs.log.Error("failed to remove test directory hierarchy", zap.Error(err))
+func (test *Test) MustStop() {
+	test.log.Info("clean up directories created during the testing")
+	if err := afero.NewOsFs().RemoveAll(testDir); err != nil {
+		test.log.Error("failed to remove test directory hierarchy", zap.Error(err))
 	}
 }
 
 // MustClearState resets the state of the test.
-func (specs *TestSpecifications) MustClearState(scenario *godog.Scenario) {
-	specs.log.Info(fmt.Sprintf("clear any previous state before scenario: %s", scenario.Name))
-	specs.out = &out{}
-	specs.in = &in{}
-	if err := afero.NewOsFs().RemoveAll("./funditest"); err != nil {
-		specs.log.Fatal("failed to remove test directory hierarchy", zap.Error(err))
+func (test *Test) MustClearState(scenario *godog.Scenario) {
+	test.log.Info(fmt.Sprintf("clear any previous state before scenario: %s", scenario.Name))
+	if err := afero.NewOsFs().RemoveAll(testDir); err != nil {
+		test.log.Fatal("failed to remove test directory hierarchy", zap.Error(err))
 	}
 }
 
-func (specs TestSpecifications) commandOutput() string {
-	return strings.TrimSpace(string(specs.out.cmdOutput))
+func (test *Test) commandOutput() string {
+	return strings.TrimSpace(string(test.cmd.output))
+}
+
+func (test *Test) workingDirectory() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		test.log.Fatal("failed to get working directory", zap.Error(err))
+	}
+
+	return dir
 }

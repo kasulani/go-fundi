@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	mockDirectoryStructureCreator     func(ctx context.Context, structure *ProjectDirectoryStructure) error
+	mockDirectoryStructureCreator     func(ctx context.Context, output string, directories []string) error
 	inMemoryDirectoryStructureCreator struct {
 		test       *testing.T
 		fileSystem afero.Fs
@@ -26,21 +26,23 @@ type (
 // CreateDirectoryStructure is a mock.
 func (m mockDirectoryStructureCreator) CreateDirectoryStructure(
 	ctx context.Context,
-	structure *ProjectDirectoryStructure,
+	output string,
+	directories []string,
 ) error {
-	return m(ctx, structure)
+	return m(ctx, output, directories)
 }
 
 // CreateDirectoryStructure is implemented by an in memory file system.
 func (m *inMemoryDirectoryStructureCreator) CreateDirectoryStructure(
 	_ context.Context,
-	structure *ProjectDirectoryStructure,
+	output string,
+	directories []string,
 ) error {
 	m.test.Helper()
 
-	for _, dir := range structure.directories {
+	for _, dir := range directories {
 		m.test.Logf("creating directory hierarchy: %s...", dir)
-		if err := m.fileSystem.MkdirAll(dir, 0755); err != nil {
+		if err := m.fileSystem.MkdirAll(output+string(os.PathSeparator)+dir, 0755); err != nil {
 			return err
 		}
 	}
@@ -70,9 +72,9 @@ func (mf *inMemoryFilesCreator) CreateFiles(ctx context.Context, metadata *Metad
 		mf.test.Logf("creating file: %s...", name)
 
 		if template != "" {
-			// parse template
-			continue
+			data = []byte(template)
 		}
+
 		if err := afero.WriteFile(mf.fileSystem, name, data, 0644); err != nil {
 			return err
 		}
@@ -86,6 +88,10 @@ func (mf *inMemoryFilesCreator) assertCreatedFiles(filenames []string) {
 
 	for _, name := range filenames {
 		info, err := mf.fileSystem.Stat(name)
+		if info == nil {
+			mf.test.Error("file not found")
+		}
+
 		assert.False(mf.test, info.IsDir())
 		assert.False(mf.test, os.IsNotExist(err))
 	}

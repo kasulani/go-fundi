@@ -7,7 +7,7 @@ import (
 	"github.com/kasulani/go-fundi/internal/behaviour"
 )
 
-var specs *behaviour.TestSpecifications
+var specs *behaviour.Test
 
 func InitializeSuite(ts *godog.TestSuiteContext) {
 	ts.BeforeSuite(func() {

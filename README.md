@@ -81,7 +81,7 @@ to clean any existing build artifacts before running the go install command agai
 
 ## Usage
 
-To use Fundi, create a YAML file that specifies the project structure and any `go` templates to be used for files in
+To use **Fundi**, create a YAML file that specifies the project structure and any `go` templates that specify the contents of the files in
 each directory.
 
 **Example YAML file**
@@ -101,32 +101,63 @@ directories:
         files:
           - name: main.go
             template: main.go.tmpl
-            skip: true
       - name: internal
         skip: true
         files:
           - name: domain.go
             template: domain.go.tmpl
 ```
-
-Then run the generate command to create the project directories and files.
-
 **Generate the project directories and files using templates:**
 
+When you execute the generate command with the above configuration file, **Fundi** will create a project directory structure,
+add files to the project directories. The file contents in those files will be generated based on the templates provided.
 ```bash
 $ fundi generate -f /path/to/yaml/file.yaml
 ```
 
 **Generate only the project directories:**
 
+Edit the `example yaml file` and remove the files from the configuration file.
+```yaml
+metadata:
+  output: "."
+  templates: "./testdata"
+  values: "./testdata/.values.yml"
+directories:
+  - name: funditest
+    directories:
+      - name: cmd
+      - name: internal
+```
+When you execute the command below, you will only have directories created without any files.
 ```bash
-$ fundi generate --directories-only -f /path/to/yaml/file.yaml
+$ fundi generate -f /path/to/yaml/file.yaml
 ```
 
 **Generate only the project files:**
 
+Edit the `example yaml file` and remove the templates from the configuration file.
+```yaml
+metadata:
+  output: "."
+  templates: "./templates"
+  values: "./values.yml"
+directories:
+  - name: funditest
+    files:
+      - name: README.md
+    directories:
+      - name: cmd
+        files:
+          - name: main.go
+      - name: internal
+        skip: true
+        files:
+          - name: domain.go
+```
+When you execute the command below, you will only have directories and empty files created.
 ```bash
-$ fundi generate --empty-files -f /path/to/yaml/file.yaml
+$ fundi generate -f /path/to/yaml/file.yaml
 ```
 
 ## Roadmap

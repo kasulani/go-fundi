@@ -7,7 +7,7 @@ Feature: Generate project directories
     """
     When I execute the cli command
     """
-    fundi generate-cmd -f {{.File}}
+    fundi generate -f {{.ConfigFile}}
     """
     Then I must get an exit code 1
     And I must get a command output
@@ -45,7 +45,7 @@ Feature: Generate project directories
     """
     When I execute the cli command
     """
-    fundi generate-cmd -f {{.File}}
+    fundi generate -f {{.ConfigFile}}
     """
     Then I must get an exit code 0
     When I execute the cli command
@@ -74,7 +74,7 @@ Feature: Generate project directories
     """
     When I execute the cli command
     """
-    fundi generate-cmd -f {{.File}}
+    fundi generate -f {{.ConfigFile}}
     """
     Then I must get an exit code 0
     When I execute the cli command
@@ -105,7 +105,7 @@ Feature: Generate project directories
     """
     When I execute the cli command
     """
-    fundi generate-cmd -f {{.File}}
+    fundi generate -f {{.ConfigFile}}
     """
     Then I must get an exit code 0
     When I execute the cli command
