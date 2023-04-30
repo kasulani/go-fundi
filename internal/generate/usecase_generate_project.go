@@ -37,11 +37,10 @@ func (useCase *ProjectUseCase) getAllDirectoriesInTheConfigFile(directories Dire
 func (useCase *ProjectUseCase) generateProjectStructure(ctx context.Context, configFile *ConfigurationFile) error {
 	err := useCase.structureCreator.CreateDirectoryStructure(
 		ctx,
-		&ProjectDirectoryStructure{
-			output:      configFile.metadata.output,
-			directories: useCase.getAllDirectoriesInTheConfigFile(configFile.directories),
-		},
+		configFile.metadata.output,
+		useCase.getAllDirectoriesInTheConfigFile(configFile.directories),
 	)
+
 	if err != nil {
 		return errors.Wrap(err, "failed to create project directory structure")
 	}

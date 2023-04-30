@@ -45,6 +45,11 @@ type (
 	FileTemplates map[string]string
 )
 
+// GetDestinationPath returns destination path where the project will be created.
+func (m *Metadata) GetDestinationPath() string {
+	return m.output
+}
+
 // GetTemplatePath returns location of templates.
 func (m *Metadata) GetTemplatePath() string {
 	return m.templates

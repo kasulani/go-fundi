@@ -23,7 +23,7 @@ func TestScaffoldProject(t *testing.T) {
 		"when the directory structure creator fails, return an error": {
 			expectedErr: errors.New("failed to create project directory structure: an-OS-error"),
 			structureCreator: mockDirectoryStructureCreator(
-				func(ctx context.Context, structure *ProjectDirectoryStructure) error {
+				func(ctx context.Context, output string, directories []string) error {
 					return errors.New("an-OS-error")
 				},
 			),
@@ -32,7 +32,7 @@ func TestScaffoldProject(t *testing.T) {
 		"when the file creator fails, return an error": {
 			expectedErr: errors.New("failed to create project files: an-OS-error"),
 			structureCreator: mockDirectoryStructureCreator(
-				func(ctx context.Context, structure *ProjectDirectoryStructure) error {
+				func(ctx context.Context, output string, directories []string) error {
 					return nil
 				},
 			),
@@ -102,7 +102,7 @@ func TestGetAllDirectoriesInTheConfigFile(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			useCase := NewProjectUseCase(mockDirectoryStructureCreator(
-				func(_ context.Context, _ *ProjectDirectoryStructure) error {
+				func(ctx context.Context, output string, directories []string) error {
 					return nil
 				},
 			), nil)

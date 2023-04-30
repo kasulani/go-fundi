@@ -45,8 +45,6 @@ type (
 
 	directoryCreator struct{ fs afero.Fs }
 
-	fileCreator struct{ fs afero.Fs }
-
 	filesCreator struct{ fs afero.Fs }
 )
 
@@ -106,9 +104,10 @@ func (yf *yamlFile) convertDirectories(ds directories) generate.Directories {
 
 func (creator *directoryCreator) CreateDirectoryStructure(
 	_ context.Context,
-	structure *generate.ProjectDirectoryStructure,
+	output string,
+	directories []string,
 ) error {
-	dirs := structure.Directories()
+	dirs := directories
 
 	bar, err := pterm.DefaultProgressbar.WithTotal(len(dirs)).WithTitle("Generating directories").Start()
 	if err != nil {
@@ -116,31 +115,8 @@ func (creator *directoryCreator) CreateDirectoryStructure(
 	}
 
 	for _, dir := range dirs {
-		if err := creator.fs.MkdirAll(dir, 0755); err != nil {
+		if err := creator.fs.MkdirAll(output+string(os.PathSeparator)+dir, 0755); err != nil {
 			return errors.Wrapf(err, "failed to create directory %s", dir)
-		}
-		bar.Increment()
-	}
-
-	_, err = bar.Stop()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (creator *fileCreator) CreateFiles(files map[string][]byte) error {
-	bar, err := pterm.DefaultProgressbar.WithTotal(len(files)).WithTitle("Generating files").Start()
-	if err != nil {
-		return err
-	}
-
-	for name, data := range files {
-		if err := afero.WriteFile(creator.fs, name, data, 0644); err != nil {
-			_, _ = bar.Stop()
-
-			return errors.Wrapf(err, "failed to create file %s", name)
 		}
 		bar.Increment()
 	}
@@ -168,6 +144,7 @@ func (fc *filesCreator) CreateFiles(
 		return err
 	}
 
+	output := metadata.GetDestinationPath()
 	templatePath := metadata.GetTemplatePath()
 
 	for name, templateFile := range templateFiles {
@@ -176,10 +153,11 @@ func (fc *filesCreator) CreateFiles(
 			return errors.Wrapf(err, "failed to parse template %s", templateFile)
 		}
 
-		if err := afero.WriteFile(fc.fs, name, data, 0644); err != nil {
+		destinationPath := output + string(os.PathSeparator) + name
+		if err := afero.WriteFile(fc.fs, destinationPath, data, 0644); err != nil {
 			_, _ = bar.Stop()
 
-			return errors.Wrapf(err, "failed to create file %s", name)
+			return errors.Wrapf(err, "failed to create file %s", destinationPath)
 		}
 		bar.Increment()
 	}
