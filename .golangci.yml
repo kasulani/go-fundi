@@ -43,7 +43,6 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - deadcode
 #    - depguard
     - dupl
     - errcheck
