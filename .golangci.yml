@@ -43,8 +43,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - deadcode
-    - depguard
+#    - depguard
     - dupl
     - errcheck
     - gochecknoinits
@@ -53,7 +52,6 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
     - gosec
     - gosimple
     - ineffassign
@@ -65,7 +63,6 @@ linters:
     - unconvert
     - unparam
     - unused
-    - varcheck
     - prealloc
 
   fast: false
