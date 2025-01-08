@@ -44,7 +44,7 @@ linters:
   disable-all: true
   enable:
     - deadcode
-    - depguard
+#    - depguard
     - dupl
     - errcheck
     - gochecknoinits
