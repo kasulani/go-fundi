@@ -12,6 +12,7 @@ var specs *behaviour.Test
 func InitializeSuite(ts *godog.TestSuiteContext) {
 	ts.BeforeSuite(func() {
 		specs = behaviour.NewTestSpecifications()
+		specs.MustCreateDependencies()
 	})
 	ts.AfterSuite(func() {
 		specs.MustStop()

@@ -42,6 +42,9 @@ func featuresFiles(t *testing.T) []string {
 
 func initializeSuite(test *Test) func(ts *godog.TestSuiteContext) {
 	return func(ts *godog.TestSuiteContext) {
+		ts.BeforeSuite(func() {
+			test.MustCreateDependencies()
+		})
 		ts.AfterSuite(func() {
 			test.MustStop()
 		})
