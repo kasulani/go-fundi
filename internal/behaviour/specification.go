@@ -30,7 +30,10 @@ type (
 	}
 )
 
-const testDir = "./funditest"
+const (
+	testDir  = "./funditest"
+	testData = "./testdata"
+)
 
 // NewTestSpecifications provides a new instance of Test.
 func NewTestSpecifications() *Test {
@@ -86,11 +89,22 @@ func (test *Test) Loader(sc *godog.ScenarioContext) {
 	})
 }
 
+// MustCreateDependencies creates all test dependencies.
+func (test *Test) MustCreateDependencies() {
+	test.log.Info("create test data directory")
+	if err := afero.NewOsFs().MkdirAll(testData, os.ModePerm); err != nil {
+		test.log.Fatal("failed to create test directory hierarchy", zap.Error(err))
+	}
+}
+
 // MustStop frees up all test resources.
 func (test *Test) MustStop() {
 	test.log.Info("clean up directories created during the testing")
 	if err := afero.NewOsFs().RemoveAll(testDir); err != nil {
 		test.log.Error("failed to remove test directory hierarchy", zap.Error(err))
+	}
+	if err := afero.NewOsFs().RemoveAll(testData); err != nil {
+		test.log.Error("failed to remove test data directory", zap.Error(err))
 	}
 }
 
