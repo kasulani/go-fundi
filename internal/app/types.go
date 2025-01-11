@@ -72,7 +72,13 @@ func (yf *yamlFile) toConfigurationFile() *generate.ConfigurationFile {
 	}
 
 	return generate.NewConfigurationFile(
-		generate.NewMetadata(yf.Metadata.Output, yf.Metadata.Templates, yf.Metadata.Values),
+		generate.NewMetadata(
+			map[string]string{
+				generate.MetaDataOutputKey:    yf.Metadata.Output,
+				generate.MetaDataTemplatesKey: yf.Metadata.Templates,
+				generate.MetaDataValuesKey:    yf.Metadata.Values,
+			},
+		),
 		dirs,
 	)
 }
