@@ -1,12 +1,11 @@
 package generate
 
 // NewMetadata returns an instance of Metadata.
-func NewMetadata(output, templates, values string) *Metadata {
-	// tech-debt: convert  params (output, templates, values) to value types
+func NewMetadata(metadata map[string]string) *Metadata {
 	return &Metadata{
-		output:    output,
-		templates: templates,
-		values:    values,
+		output:    metadata[MetaDataOutputKey],
+		templates: metadata[MetaDataTemplatesKey],
+		values:    metadata[MetaDataValuesKey],
 	}
 }
 

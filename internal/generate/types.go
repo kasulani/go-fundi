@@ -39,6 +39,12 @@ type (
 	FileTemplates map[string]string
 )
 
+const (
+	MetaDataOutputKey    = "output"
+	MetaDataTemplatesKey = "templates"
+	MetaDataValuesKey    = "values"
+)
+
 // GetDestinationPath returns destination path where the project will be created.
 func (m *Metadata) GetDestinationPath() string {
 	return m.output
