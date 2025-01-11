@@ -1,4 +1,4 @@
-FROM golang:1.16 AS dev-image
+FROM golang:1.23 AS dev-image
 
 # Define current working directory
 WORKDIR /project
