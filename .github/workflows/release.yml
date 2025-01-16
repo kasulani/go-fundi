@@ -44,7 +44,7 @@ jobs:
             minor=0
             patch=0
           else
-            echo "Branch prefix not recognized. Skipping release."
+            echo "Skipping release because branch prefix '$branch' does not affect versioning."
             exit 0
           fi
 
