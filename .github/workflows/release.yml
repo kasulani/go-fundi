@@ -1,66 +1,68 @@
-name: Release
+name: Merge
 
 on:
-  push:
-    branches: [ master ]
+  pull_request:
+    types:
+      - closed
 
 jobs:
-  create-tag-and-release:
-    name: Create Tag and Run GoReleaser
+  release:
+    name: Release
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repository
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      # Step 2: Configure Git
-      - name: Configure Git
+      - name: Set up Git
         run: |
           git config --global user.name "Emmanuel King Kasulani"
           git config --global user.email "kasulani@gmail.com"
 
-      # Step 3: Determine the version bump
-      - name: Determine Version Bump
-        id: bump
+      - name: Get the latest tag
+        id: get-latest-tag
         run: |
-          # Get the latest tag or default to 0.0.0
-          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1) || echo "v0.0.0")
+          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+          echo "tag: $latest_tag"
 
-          # Extract major, minor, and patch
+      - name: Determine next version
+        id: determine-version
+        run: |
+          # Extract the branch prefix from the PR's base ref
+          branch="${{ github.event.pull_request.head.ref }}"
+          echo "Branch: $branch"
+          latest_tag="${{ env.latest_tag }}"
           IFS='.' read -r major minor patch <<< "${latest_tag#v}"
 
-          # Determine branch prefix
-          branch="${GITHUB_REF#refs/heads/}"
-          echo "Branch: $branch"
-          if [[ $branch == minor/* ]]; then
-            ((minor++))
+          if [[ $branch == "minor/"* ]]; then
+            minor=$((minor + 1))
             patch=0
-          elif [[ $branch == patch/* ]]; then
-            ((patch++))
-          elif [[ $branch == major/* ]]; then
-            ((major++))
+          elif [[ $branch == "patch/"* ]]; then
+            patch=$((patch + 1))
+          elif [[ $branch == "major/"* ]]; then
+            major=$((major + 1))
             minor=0
             patch=0
           else
-            echo "Skipping release because branch prefix '$branch' does not affect versioning."
+            echo "Branch prefix '$branch' does not affect versioning. Skipping release."
             exit 0
           fi
 
-          # Create the new tag
           new_tag="v$major.$minor.$patch"
-          echo "New tag: $new_tag"
-          echo "tag=$new_tag" >> $GITHUB_ENV
+          echo "new_tag=$new_tag" >> $GITHUB_ENV
+          echo "Determined new version: $new_tag"
 
-          # Push the new tag
-          git tag "$new_tag"
-          git push origin "$new_tag"
+      - name: Create tag
+        run: |
+          git tag "${{ env.new_tag }}"
+          git push origin "${{ env.new_tag }}"
 
-      # Step 4: Run GoReleaser
       - name: Run GoReleaser
-        if: success()
-        uses: goreleaser/goreleaser-action@v4
+        uses: goreleaser/goreleaser-action@v6
         with:
+          version: latest
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
