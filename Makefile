@@ -56,6 +56,9 @@ deps-dev:
 	${call print, "Installing CompileDaemon"}
 	${call go, install github.com/githubnemo/CompileDaemon@latest}
 
+	${call print, "Installing Goreleaser"}
+	${call go, install github.com/goreleaser/goreleaser/v2@latest}
+
 	${call print, "Installing Linters"}
 	${call go, install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0}
 
@@ -69,6 +72,7 @@ deps-dev:
 	${call print, "Installing Gherkin Formatter"}
 	@wget https://github.com/antham/ghokin/releases/download/v1.6.1/ghokin_linux_amd64 -O $(GOPATH)/bin/ghokin
 	@chmod +x $(GOPATH)/bin/ghokin
+
 
 deps-clean:
 	${call print, "Cleaning dependencies"}
