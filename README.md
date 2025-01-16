@@ -8,7 +8,7 @@
     <li>
      <a href="#features">Features</a>
       <ul>
-       <li><a href="#generate-project-structure">Generate project structure</a></li>
+       <li><a href="#generate-project-structure-from-yaml">Generate project structure</a></li>
        <li><a href="#generate-project-files-from-local-templates">Generate project files from local templates</a></li>
        <li><a href="#generate-project-files-from-remote-templates">Generate project files from remote templates</a></li>
       </ul>
@@ -40,21 +40,21 @@ refer to a skilled trades-person or artisan.
 
 ## Features
 
-### Generate project structure
+### 1. Generate Project Structure from YAML
 
-The tool can generate a project structure based on a YAML file that specifies the directory structure. The generated
-project can be customized by specifying `go` templates for files in each directory.
+Fundi generates a project structure using a YAML configuration file that specifies the desired directory structure.
+Files within the directories can be customized using `go` templates.
 
-### Generate project files from local templates
+### 2. Generate Project Files from Local Templates
 
-The tool supports reading templates from a local directory on the user's machine and generate project files based on 
-these templates. This allows developers to create their own templates and use them with the tool.
+Fundi can use templates stored on your local machine to create project files. This enables developers to define and
+reuse custom templates tailored to specific project requirements.
 
-### Generate project files from remote templates
+### 3. Generate Project Files from Remote Templates (Coming Soon)
 
-The tool can read templates from a remote Git repository and generate project files based on these templates. This feature 
-enables developers to use templates hosted on GitHub or any other Git hosting platform.
-
+Fundi can fetch templates from remote Git repositories (e.g., GitHub or other Git hosting platforms) and generate
+project files. This simplifies collaboration by allowing teams to share and maintain templates in a centralized
+repository.
 <!-- INSTALLATION -->
 
 ## Installation
@@ -81,10 +81,11 @@ to clean any existing build artifacts before running the go install command agai
 
 ## Usage
 
-To use **Fundi**, create a YAML file that specifies the project structure and any `go` templates that specify the contents of the files in
+To use **Fundi**, create a YAML file that specifies the project structure and any `go` templates that specify the
+contents of the files in
 each directory.
 
-**Example YAML file**
+**Example YAML configuration file**
 
 ```yaml
 metadata:
@@ -107,10 +108,14 @@ directories:
           - name: domain.go
             template: domain.go.tmpl
 ```
+
 **Generate the project directories and files using templates:**
 
-When you execute the generate command with the above configuration file, **Fundi** will create a project directory structure,
-add files to the project directories. The file contents in those files will be generated based on the templates provided.
+When you execute the generate command with the above configuration file, **Fundi** will create a project directory
+structure,
+add files to the project directories. The file contents in those files will be generated based on the templates
+provided.
+
 ```bash
 $ fundi generate -f /path/to/yaml/file.yaml
 ```
@@ -118,6 +123,7 @@ $ fundi generate -f /path/to/yaml/file.yaml
 **Generate only the project directories:**
 
 Edit the `example yaml file` and remove the files from the configuration file.
+
 ```yaml
 metadata:
   output: "."
@@ -129,14 +135,17 @@ directories:
       - name: cmd
       - name: internal
 ```
+
 When you execute the command below, you will only have directories created without any files.
+
 ```bash
 $ fundi generate -f /path/to/yaml/file.yaml
 ```
 
 **Generate only the project files:**
 
-Edit the `example yaml file` and remove the templates from the configuration file.
+Edit the `example yaml configuration file` and remove the templates from the configuration file.
+
 ```yaml
 metadata:
   output: "."
@@ -155,25 +164,24 @@ directories:
         files:
           - name: domain.go
 ```
+
 When you execute the command below, you will only have directories and empty files created.
+
 ```bash
 $ fundi generate -f /path/to/yaml/file.yaml
 ```
-
-## Roadmap
-
-See the [open issues](https://github.com/kasulani/go-fundi/issues) for a list of proposed features (and known issues).
 
 <!-- CONTRIBUTING -->
 
 ## Contributing
 
-We welcome contributions from the community! If you would like to contribute to **Fundi**, please follow these guidelines:
+We welcome contributions from the community! If you would like to contribute to **Fundi**, please follow these
+guidelines:
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+2. Create your Feature Branch (`git checkout -b minor/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
+4. Push to the Branch (`git push origin minor/AmazingFeature`)
 5. Open a Pull Request
 
 Before submitting a pull request, please ensure that your code adheres to the following guidelines:
@@ -187,6 +195,71 @@ If you have any questions or issues, please open an issue in this repository.
 Contributing Guidelines
 
 For more detailed information on contributing to Fundi, please see the CONTRIBUTING file in this repository.
+
+## Branch naming convention and commit message format
+
+The branch naming convention and commit message format are as follows:
+Branch naming convention: `type/branch-name`
+Commit message format: `type: commit message`
+The `type` can be one of the following:
+
+- `minor`: Minor changes or a new feature
+- `major`: Major changes or breaking change
+- `patch`: A bug fix
+- `test`: Adding tests
+- `chore`: Maintenance tasks
+
+## Versioning
+
+This project follows **Semantic Versioning 2.0.0** guidelines to manage releases and version numbers. Semantic
+versioning ensures that version numbers convey meaning about the underlying changes, helping developers and users know
+what to expect.
+
+### Version Format
+
+`vMAJOR.MINOR.PATCH`
+
+- **`MAJOR`**: Increased when there are incompatible changes or breaking changes to the API or functionality.
+    - Example: Removing or changing a feature that existing users depend on.
+    - Example Version: `v2.0.0` (Breaking change introduced from `v1.x.x`).
+- **`MINOR`**: Increased when new features are added in a backward-compatible manner.
+    - Example: Adding a new feature that doesn’t interfere with existing functionality.
+    - Example Version: `v1.2.0` (New features added to `v1.1.x`).
+- **`PATCH`**: Increased when backward-compatible bug fixes are introduced.
+    - Example: Fixing a typo, correcting a bug, or updating documentation.
+    - Example Version: `v1.1.1` (Bug fix for `v1.1.0`).
+
+### How Versioning Works in This Project
+
+1. **Branch Prefixes**:
+    - Branch naming conventions indicate the type of version bump:
+        - `minor/*` → Minor version bump.
+        - `patch/*` → Patch version bump.
+        - `major/*` → Major version bump.
+
+2. **Automated Tagging and Releases**:
+    - Tags are created automatically based on the type of changes introduced.
+    - The release workflow ensures that every new tag is packaged and published
+      using [GoReleaser](https://goreleaser.com).
+
+3. **Commit History and Changelog**:
+    - Version numbers are mapped to the changelog to reflect new features, bug fixes, or breaking changes in every
+      release.
+
+### Examples
+
+- `v1.0.0` → Initial release with the first stable version.
+- `v1.1.0` → New features added.
+- `v1.1.1` → Minor bug fix.
+
+### Learn More
+
+For a detailed explanation of semantic versioning, see
+the [Semantic Versioning Specification (SemVer 2.0.0)](https://semver.org/).
+
+## Roadmap
+
+See the [open issues](https://github.com/kasulani/go-fundi/issues) for a list of proposed features (and known issues).
 
 <!-- LICENSE -->
 
@@ -207,7 +280,8 @@ this repository.
 
 ## Contact
 
-If you have any questions, suggestions or feedback, feel free to contact me via [email](mailto:kasulani@gmail.com). You can also find me
+If you have any questions, suggestions or feedback, feel free to contact me via [email](mailto:kasulani@gmail.com). You
+can also find me
 on [LinkedIn](https://ug.linkedin.com/in/kasulani). I'm always happy to hear from you!
 
 <!-- CONCLUSION -->
