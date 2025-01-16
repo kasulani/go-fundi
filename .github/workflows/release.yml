@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-tag-and-release:
+    name: Create Tag and Run GoReleaser
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Configure Git
+      - name: Configure Git
+        run: |
+          git config --global user.name "Emmanuel King Kasulani"
+          git config --global user.email "kasulani@gmail.com"
+
+      # Step 3: Determine the version bump
+      - name: Determine Version Bump
+        id: bump
+        run: |
+          # Get the latest tag or default to 0.0.0
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+          # Extract major, minor, and patch
+          IFS='.' read -r major minor patch <<< "${latest_tag#v}"
+
+          # Determine branch prefix
+          branch="${GITHUB_REF#refs/heads/}"
+          echo "Branch: $branch"
+          if [[ $branch == minor/* ]]; then
+            ((minor++))
+            patch=0
+          elif [[ $branch == patch/* ]]; then
+            ((patch++))
+          elif [[ $branch == major/* ]]; then
+            ((major++))
+            minor=0
+            patch=0
+          else
+            echo "Branch prefix not recognized. Skipping release."
+            exit 0
+          fi
+
+          # Create the new tag
+          new_tag="v$major.$minor.$patch"
+          echo "New tag: $new_tag"
+          echo "tag=$new_tag" >> $GITHUB_ENV
+
+          # Push the new tag
+          git tag "$new_tag"
+          git push origin "$new_tag"
+
+      # Step 4: Run GoReleaser
+      - name: Run GoReleaser
+        if: success()
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
