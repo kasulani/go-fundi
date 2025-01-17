@@ -58,7 +58,50 @@ repository.
 <!-- INSTALLATION -->
 
 ## Installation
+Follow these steps to install **Fundi** on your system:
 
+---
+### Step 1: Download the Release
+1. Visit the [Releases Page](https://github.com/kasulani/go-fundi/releases).
+2. Download the appropriate archive for your operating system and architecture:
+    - **Linux**: `fundi_<version>_Linux_x86_64.tar.gz`
+    - **Windows**: `fundi_<version>_Windows_x86_64.zip`
+    - **macOS**: `fundi_<version>_Darwin_x86_64.tar.gz`
+
+---
+
+### Step 2: Extract the Archive
+- **Linux/macOS**:
+```bash
+  tar -xvf fundi_<version>_<os>_<arch>.tar.gz
+```
+
+- **Windows**:
+  - Right-click on the downloaded ZIP file and select "Extract All".
+  - Choose a destination folder and click "Extract".
+
+---
+
+### Step 3: Move the Binary to a Directory in Your PATH
+- **Linux/macOS**:
+  - Move the `fundi` binary to a directory in your PATH (e.g., `/usr/local/bin`):
+  ```bash
+    sudo mv fundi /usr/local/bin
+  ```
+  - Verify the installation by running:
+  ```bash
+    fundi --version
+  ```
+- **Windows**:
+  - Move the `fundi.exe` binary to a directory in your PATH (e.g., `C:\Windows\System32`).
+  - Open a new Command Prompt window and run:
+    ```bash
+    fundi --version
+    ```
+
+---
+
+### Install using Go
 To install Fundi, you can use the go install command:
 
 ```bash

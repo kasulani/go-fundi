@@ -11,3 +11,4 @@ Please comply to the contributing rules of this repository, make sure the checkl
 - [ ] I have tests (unit + integration if applicable)
 - [ ] I have done dev_qa (where necessary) for the changes I am adding to this repository before asking other developers to dev_QA
 - [ ] I have updated the [README.md](https://github.com/kasulani/go-fundi/blob/master/README.md) where necessary
+- [ ] I have updated the [CHANGELOG.md](https://github.com/kasulani/go-fundi/blob/master/CHANGELOG.md) where necessary
