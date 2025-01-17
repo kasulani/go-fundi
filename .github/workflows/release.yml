@@ -55,11 +55,13 @@ jobs:
           echo "Determined new version: $new_tag"
 
       - name: Create tag
+        if: env.new_tag != ''
         run: |
           git tag "${{ env.new_tag }}"
           git push origin "${{ env.new_tag }}"
 
       - name: Run GoReleaser
+        if: env.new_tag != ''
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
