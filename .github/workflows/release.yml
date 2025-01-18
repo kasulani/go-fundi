@@ -19,8 +19,12 @@ jobs:
 
       - name: Set up Git
         run: |
-          git config --global user.name "Emmanuel King Kasulani"
-          git config --global user.email "kasulani@gmail.com"
+          username="${{ github.event.pull_request.user.login }}"
+          email="${{ secrets.DEFAULT_EMAIL }}"
+          echo "Setting up Git with username: $username"
+          echo "Setting up Git with email: $email"
+          git config --global user.name "$username"
+          git config --global user.email "$email"
 
       - name: Get the latest tag
         id: get-latest-tag
