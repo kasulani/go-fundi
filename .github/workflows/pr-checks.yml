@@ -1,0 +1,86 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  branch-name:
+    name: Check Branch Naming Convention
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Validate Branch Name
+        run: |
+          branch_name="${GITHUB_HEAD_REF}"
+          echo "Checking branch name: $branch_name"
+          if [[ ! "$branch_name" =~ ^(Minor|minor|Major|major|Patch|patch|Test|test|Chore|chore)/.+$ ]]; then
+            echo "Error: Branch name '$branch_name' does not follow the convention 'type/branch-name'."
+            echo "Allowed types: Minor/minor, Major/major, Patch/patch, Test/test, Chore/chore."
+            exit 1
+          fi
+          echo "Branch name '$branch_name' is valid."
+
+  commit-message:
+    name: Check Commit Message Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Fetch All Branches
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.ref }}
+          echo "Listing all branches for debugging:"
+          git branch -a
+
+      - name: Validate Commit Messages
+        run: |
+          base_branch="origin/${{ github.event.pull_request.base.ref }}"
+          head_branch="origin/${{ github.event.pull_request.head.ref }}"
+          echo "Base branch: $base_branch"
+          echo "Head branch: $head_branch"
+          
+          # Ensure branches exist
+          echo "Checking if branches exist..."
+          git show-ref --verify --quiet refs/remotes/$base_branch || (echo "Error: Base branch $base_branch not found." && exit 1)
+          git show-ref --verify --quiet refs/remotes/$head_branch || (echo "Error: Head branch $head_branch not found." && exit 1)
+
+          # Get all commit messages in the PR
+          commits=$(git log --pretty="%s" $base_branch..$head_branch)
+          echo "Checking commit messages:"
+          echo "$commits"
+          invalid_commit_count=0
+
+          while IFS= read -r commit; do
+            if [[ ! "$commit" =~ ^(Minor|minor|Major|major|Patch|patch|Test|test|Chore|chore):\ .+ ]]; then
+              echo "Error: Commit message '$commit' does not follow the format 'type: commit message'."
+              echo "Allowed types: Minor/minor, Major/major, Patch/patch, Test/test, Chore/chore."
+              invalid_commit_count=$((invalid_commit_count + 1))
+            fi
+          done <<< "$commits"
+
+          if [[ $invalid_commit_count -gt 0 ]]; then
+            echo "Found $invalid_commit_count invalid commit message(s)."
+            exit 1
+          fi
+          echo "All commit messages are valid."
+
+  pr-title:
+    name: Check Pull Request Title Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR Title
+        run: |
+          pr_title="${{ github.event.pull_request.title }}"
+          echo "Checking PR title: $pr_title"
+          if [[ ! "$pr_title" =~ ^(Minor|minor|Major|major|Patch|patch|Test|test|Chore|chore):\ .+ ]]; then
+            echo "Error: PR title '$pr_title' does not follow the format 'type: PR title'."
+            echo "Allowed types: Minor/minor, Major/major, Patch/patch, Test/test, Chore/chore."
+            exit 1
+          fi
+          echo "PR title '$pr_title' is valid."

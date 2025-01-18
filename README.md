@@ -218,40 +218,9 @@ $ fundi generate -f /path/to/yaml/file.yaml
 
 ## Contributing
 
-We welcome contributions from the community! If you would like to contribute to **Fundi**, please follow these
-guidelines:
+For more detailed information on contributing to Fundi, please see the [CONTRIBUTING.md](https://github.com/kasulani/go-fundi/blob/master/CONTRIBUTING.md) file in this repository.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b minor/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin minor/AmazingFeature`)
-5. Open a Pull Request
-
-Before submitting a pull request, please ensure that your code adheres to the following guidelines:
-
-Follow the existing code style and formatting. Write clear and concise commit messages. Include tests for any new
-functionality or bug fixes. Ensure that your changes do not break any existing functionality. By contributing to Fundi,
-you agree to license your contributions under the terms of the MIT License.
-
-If you have any questions or issues, please open an issue in this repository.
-
-Contributing Guidelines
-
-For more detailed information on contributing to Fundi, please see the CONTRIBUTING file in this repository.
-
-## Branch naming convention and commit message format
-
-The branch naming convention and commit message format are as follows:
-Branch naming convention: `type/branch-name`
-Commit message format: `type: commit message`
-The `type` can be one of the following:
-
-- `minor`: Minor changes or a new feature
-- `major`: Major changes or breaking change
-- `patch`: A bug fix
-- `test`: Adding tests
-- `chore`: Maintenance tasks
-
+<!-- VERSIONING -->
 ## Versioning
 
 This project follows **Semantic Versioning 2.0.0** guidelines to manage releases and version numbers. Semantic
