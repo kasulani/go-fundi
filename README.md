@@ -40,17 +40,17 @@ refer to a skilled trades-person or artisan.
 
 ## Features
 
-### 1. Generate Project Structure from YAML
+### Generate Project Structure from YAML
 
 Fundi generates a project structure using a YAML configuration file that specifies the desired directory structure.
 Files within the directories can be customized using `go` templates.
 
-### 2. Generate Project Files from Local Templates
+### Generate Project Files from Local Templates
 
 Fundi can use templates stored on your local machine to create project files. This enables developers to define and
 reuse custom templates tailored to specific project requirements.
 
-### 3. Generate Project Files from Remote Templates (Coming Soon)
+### Generate Project Files from Remote Templates (Coming Soon)
 
 Fundi can fetch templates from remote Git repositories (e.g., GitHub or other Git hosting platforms) and generate
 project files. This simplifies collaboration by allowing teams to share and maintain templates in a centralized
@@ -101,11 +101,11 @@ Follow these steps to install **Fundi** on your system:
 
 ---
 
-### Install using Go
+### Install from source using go install
 To install Fundi, you can use the go install command:
 
 ```bash
-$ go install github.com/kasulani/go-fundi
+go install github.com/kasulani/go-fundi/cmd/fundi@latest
 ```
 
 This will install **Fundi** in your `$GOBIN` directory, which is typically located at `$GOPATH/bin`. Make sure that this
@@ -115,7 +115,16 @@ terminal.
 If you encounter any errors during the installation process, try running
 
 ```bash
-$ go clean -i github.com/kasulani/go-fundi
+#!/bin/bash
+# Clean Go build and module cache for fundi
+go clean -cache -modcache -i -r github.com/kasulani/go-fundi
+
+# Remove binaries from GOPATH or GOBIN
+rm -f $(go env GOBIN)/fundi
+rm -f $(go env GOPATH)/bin/fundi
+
+# Remove local artifact directories
+rm -rf ./bin ./dist
 ```
 
 to clean any existing build artifacts before running the go install command again.
