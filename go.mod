@@ -11,7 +11,7 @@ require (
 	github.com/pterm/pterm v0.12.80
 	github.com/spf13/afero v1.9.5
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.24.0
 	gopkg.in/yaml.v3 v3.0.1
 )
