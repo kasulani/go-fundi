@@ -17,9 +17,10 @@ import (
 
 type (
 	metadata struct {
-		Output    string `yaml:"output"`
-		Templates string `yaml:"templates"`
-		Values    string `yaml:"values"`
+		Output    string         `yaml:"output"`
+		Templates string         `yaml:"templates"`
+		Values    string         `yaml:"values"`
+		Variables map[string]any `yaml:"variables"`
 	}
 
 	file struct {
@@ -73,10 +74,11 @@ func (yf *yamlFile) toConfigurationFile() *generate.ConfigurationFile {
 
 	return generate.NewConfigurationFile(
 		generate.NewMetadata(
-			map[string]string{
+			map[string]any{
 				generate.MetaDataOutputKey:    yf.Metadata.Output,
 				generate.MetaDataTemplatesKey: yf.Metadata.Templates,
 				generate.MetaDataValuesKey:    yf.Metadata.Values,
+				generate.MetaDataVariablesKey: yf.Metadata.Variables,
 			},
 		),
 		dirs,
@@ -157,7 +159,7 @@ func (fc *filesCreator) CreateFiles(
 		return err
 	}
 
-	templateValues, err := fc.getTemplateValues(metadata.GetValuesPath())
+	templateValues, err := fc.getTemplateValues(metadata)
 	if err != nil {
 		return err
 	}
@@ -215,18 +217,39 @@ func (fc *filesCreator) parseTemplate(
 	return buffer.Bytes(), nil
 }
 
-func (fc *filesCreator) getTemplateValues(path string) (map[string]interface{}, error) {
+func (fc *filesCreator) getTemplateValues(metadata *generate.Metadata) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
+	path := metadata.GetValuesPath()
+	variables := metadata.GetVariables()
 
-	valuesFile, err := afero.ReadFile(fc.fs, path)
+	data, err := fc.preProcessMetaVariables(path, variables)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read values file %s", path)
+		return nil, errors.Wrapf(err, "failed to preprocess placeholders in values file %s", path)
 	}
 
-	err = yaml.Unmarshal(valuesFile, &values)
+	err = yaml.Unmarshal(data, &values)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to unmarshal values file %s", path)
 	}
 
 	return values, nil
+}
+
+// preProcessMetaVariables replaces template variables in the values file with actual values.
+func (fc *filesCreator) preProcessMetaVariables(path string, variables map[string]any) ([]byte, error) {
+	valuesFile, err := afero.ReadFile(fc.fs, path)
+	if err != nil {
+		return nil, err
+	}
+
+	tmpl, err := template.New("values-file").Parse(string(valuesFile))
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := new(bytes.Buffer)
+	if err := tmpl.Execute(buffer, variables); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }

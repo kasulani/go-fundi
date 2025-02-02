@@ -35,7 +35,7 @@ func newRootCommand() *rootCommand {
 			Use:     "fundi",
 			Short:   "fundi is a scaffolding and code generation cli tool",
 			Long:    `fundi is a scaffolding and code generation cli tool`,
-			Version: "1.0.0",
+			Version: "1.1.0",
 		},
 	}
 }
