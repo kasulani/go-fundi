@@ -1,11 +1,14 @@
 package generate
 
+import "github.com/spf13/cast"
+
 // NewMetadata returns an instance of Metadata.
-func NewMetadata(metadata map[string]string) *Metadata {
+func NewMetadata(metadata map[string]any) *Metadata {
 	return &Metadata{
-		output:    metadata[MetaDataOutputKey],
-		templates: metadata[MetaDataTemplatesKey],
-		values:    metadata[MetaDataValuesKey],
+		output:    cast.ToString(metadata[MetaDataOutputKey]),
+		templates: cast.ToString(metadata[MetaDataTemplatesKey]),
+		values:    cast.ToString(metadata[MetaDataValuesKey]),
+		variables: cast.ToStringMap(metadata[MetaDataVariablesKey]),
 	}
 }
 

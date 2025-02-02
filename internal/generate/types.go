@@ -8,6 +8,7 @@ type (
 		output    string
 		templates string
 		values    string
+		variables map[string]any
 	}
 
 	// File in the project.
@@ -43,6 +44,7 @@ const (
 	MetaDataOutputKey    = "output"
 	MetaDataTemplatesKey = "templates"
 	MetaDataValuesKey    = "values"
+	MetaDataVariablesKey = "variables"
 )
 
 // GetDestinationPath returns destination path where the project will be created.
@@ -58,6 +60,11 @@ func (m *Metadata) GetTemplatePath() string {
 // GetValuesPath returns location of values.
 func (m *Metadata) GetValuesPath() string {
 	return m.values
+}
+
+// GetVariables returns variables.
+func (m *Metadata) GetVariables() map[string]any {
+	return m.variables
 }
 
 func (d *Directory) hasSubDirectories() bool {
