@@ -13,3 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of **Fundi**.
 - Feature: Generate project structure.
 - Feature: Generate project files from local templates.
+
+## [v1.1.0] - 2025-02-02
+
+### Added
+- Feature: Add a values file preprocessor.
