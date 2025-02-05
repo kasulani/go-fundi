@@ -64,16 +64,16 @@ Follow these steps to install **Fundi** on your system:
 ### Step 1: Download the Release
 1. Visit the [Releases Page](https://github.com/kasulani/go-fundi/releases).
 2. Download the appropriate archive for your operating system and architecture:
-    - **Linux**: `fundi_<version>_Linux_x86_64.tar.gz`
-    - **Windows**: `fundi_<version>_Windows_x86_64.zip`
-    - **macOS**: `fundi_<version>_Darwin_x86_64.tar.gz`
+    - **Linux**: `fundi_Linux_x86_64.tar.gz`
+    - **Windows**: `fundi_Windows_x86_64.zip`
+    - **macOS**: `fundi_Darwin_x86_64.tar.gz`
 
 ---
 
 ### Step 2: Extract the Archive
 - **Linux/macOS**:
 ```bash
-  tar -xvf fundi_<version>_<os>_<arch>.tar.gz
+  tar -xvf fundi_<os>_<arch>.tar.gz
 ```
 
 - **Windows**:
@@ -144,21 +144,24 @@ metadata:
   output: "."
   templates: "./templates"
   values: "./values.yml"
+  variables: # variables to be used in the values file
+    project: simpleAPIServer
+    repository: github.com/kasulani
 directories:
   - name: funditest
     files:
       - name: README.md
-        template: readme.md.tmpl
+        template: tmp_readme.md
     directories:
       - name: cmd
         files:
           - name: main.go
-            template: main.go.tmpl
+            template: tmp_main.go
       - name: internal
         skip: true
         files:
           - name: domain.go
-            template: domain.go.tmpl
+            template: tmp_domain.go
 ```
 
 **Generate the project directories and files using templates:**
