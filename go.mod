@@ -6,7 +6,7 @@ require (
 	github.com/cucumber/godog v0.15.0
 	github.com/goava/di v1.11.2
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/onsi/gomega v1.19.0
+	github.com/onsi/gomega v1.36.2
 	github.com/pkg/errors v0.9.1
 	github.com/pterm/pterm v0.12.80
 	github.com/spf13/afero v1.12.0
@@ -26,6 +26,7 @@ require (
 	github.com/cucumber/messages/go/v21 v21.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-memdb v1.3.4 // indirect
@@ -42,5 +43,4 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
